@@ -103,7 +103,7 @@
 <p>我们在简单的用<code>&lt;</code>或<code>&gt;</code>时，相当于使用<code>0&lt;</code>或<code>1&gt;</code></p>
 <ul>
 <li><code>cmd &gt; file</code> 把cmd命令的输出重定向到文件file中。如果file已经存在，则清空并覆盖原有文件<br>使用<code>bash</code>的<code>noclobber</code>选项可以防止复盖原有文件。</li>
-<li><code>bashcmd &gt;&gt; file</code> 把cmd命令的输出重定向到文件file中，如果file已经存在，则把信息加在原有文件后面</li>
+<li><code>cmd &gt;&gt; file</code> 把cmd命令的输出重定向到文件file中，如果file已经存在，则把信息加在原有文件后面</li>
 <li><code>cmd &lt; file</code> 使cmd命令从file读入</li>
 <li><code>cmd &lt;&lt; text</code>从命令行读取输入，直到一个与text相同的行结束。<br>除非使用引号把输入括起来，此模式将对输入内容进行shell变量替换。<br>如果使用<code>&lt;&lt;-</code> ，则会忽略接下来输入行首的tab，结束行也可以是一堆tab再加上一个与text相同的内容</li>
 <li><code>cmd &lt;&lt;&lt; word</code> 把word（而不是文件word）和后面的换行作为输入提供给cmd。</li>
