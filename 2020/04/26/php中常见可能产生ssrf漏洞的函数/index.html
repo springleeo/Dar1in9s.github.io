@@ -1,0 +1,1072 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="php中常见可能产生ssrf漏洞的函数"><meta name="keywords" content="php,SSRF"><meta name="author" content="Dar1in9"><meta name="copyright" content="Dar1in9"><title>php中常见可能产生ssrf漏洞的函数 | Dar1in9's Blog</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.7.0"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.1.1/dist/instantsearch.min.css"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.1.1/dist/instantsearch.min.js" defer></script><link rel="dns-prefetch" href="http://ta.qq.com"><script>(function() {
+   var hm = document.createElement("script");
+   hm.src = "https://tajs.qq.com/stats?sId=&lt;script type=&quot;text/javascript&quot; src=&quot;http://tajs.qq.com/stats?sId=66549793&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;";
+   var s = document.getElementsByTagName("script")[0];
+   s.parentNode.insertBefore(hm, s);
+ })();</script><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"MY1GAADR9W","apiKey":"5032629da4e94f659d98a4052bc1c5cd","indexName":"blog","hits":{"per_page":10},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容:${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容:${query}"}},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  }
+} </script><meta name="generator" content="Hexo 4.2.0"></head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="切换文章详情">切换站点概览</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">目录</div><div class="sidebar-toc__progress"><span class="progress-notice">你已经读了</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#curl"><span class="toc-number">1.</span> <span class="toc-text">curl</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#PHP-curl执行的代码流程"><span class="toc-number">1.1.</span> <span class="toc-text">PHP curl执行的代码流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PHP-curl基本用法"><span class="toc-number">1.2.</span> <span class="toc-text">PHP curl基本用法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PHP-curl-GET和POST请求"><span class="toc-number">1.3.</span> <span class="toc-text">PHP curl GET和POST请求</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PHP-curl组件相关函数"><span class="toc-number">1.4.</span> <span class="toc-text">PHP curl组件相关函数</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#PHP-curl-setopt函数选项合集"><span class="toc-number">1.5.</span> <span class="toc-text">PHP curl_setopt函数选项合集</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#file-get-contents"><span class="toc-number">2.</span> <span class="toc-text">file_get_contents</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#GET请求"><span class="toc-number">2.1.</span> <span class="toc-text">GET请求</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#POST请求"><span class="toc-number">2.2.</span> <span class="toc-text">POST请求</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#fopen"><span class="toc-number">3.</span> <span class="toc-text">fopen</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#readfile"><span class="toc-number">4.</span> <span class="toc-text">readfile</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#file"><span class="toc-number">5.</span> <span class="toc-text">file</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#fsockopen"><span class="toc-number">6.</span> <span class="toc-text">fsockopen</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#PHP-上下文-context-选项和参数"><span class="toc-number">7.</span> <span class="toc-text">PHP 上下文(context)选项和参数</span></a></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/01.png"></div><div class="author-info__name text-center">Dar1in9</div><div class="author-info__description text-center">人间值得，未来可期</div><div class="follow-button"><a href="https://github.com/Dar1in9s" target="_blank" rel="noopener">Follow Me</a></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">文章</span><span class="pull-right">53</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">标签</span><span class="pull-right">21</span></a></div></div></div><div id="content-outer"><div id="top-container" style="background-image: url(https://blog-1300147235.cos.ap-chengdu.myqcloud.com/18085.jpg)"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">Dar1in9's Blog</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">Home</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/about">About</a></span><span class="pull-right"><a class="site-page social-icon search"><i class="fa fa-search"></i><span> 搜索</span></a></span></div><div id="post-info"><div id="post-title">php中常见可能产生ssrf漏洞的函数</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-04-26</time><div class="post-meta-wordcount"><span>字数总计: </span><span class="word-count">7.7k</span><span class="post-meta__separator">|</span><span>阅读时长: 29 分钟</span></div></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><p>总结了PHP中常见可能产生SSRF的函数</p>
+<a id="more"></a>
+<h1 id="curl"><a href="#curl" class="headerlink" title="curl"></a>curl</h1><h2 id="PHP-curl执行的代码流程"><a href="#PHP-curl执行的代码流程" class="headerlink" title="PHP curl执行的代码流程"></a>PHP curl执行的代码流程</h2><ol>
+<li>使用<code>curl_init()</code>函数创建一个curl句柄</li>
+<li>使用<code>curl_setopt()</code>函数为curl句柄设置响应选项，php curl的丰富功能依靠此函数来实现</li>
+<li>使用<code>curl_exec()</code>函数执行请求</li>
+<li>使用<code>curl_close()</code>函数关闭curl句柄，释放内存</li>
+</ol>
+<h2 id="PHP-curl基本用法"><a href="#PHP-curl基本用法" class="headerlink" title="PHP curl基本用法"></a>PHP curl基本用法</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$url = <span class="string">"http://192.168.101.111/index.php"</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个curl句柄</span></span><br><span class="line">$ch = curl_init();</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置响应选项 </span></span><br><span class="line">curl_setopt($ch, CURLOPT_URL, $url);   <span class="comment">// 设置访问的url</span></span><br><span class="line">curl_setopt($ch, CURLOPT_RETURNTRANSFER, <span class="number">1</span>);    <span class="comment">// curl请求执行时，将结果返回，而不是直接输出</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行curl请求，返回结果到变量</span></span><br><span class="line">$response = curl_exec($ch);             </span><br><span class="line"></span><br><span class="line"><span class="comment"># 关闭curl句柄</span></span><br><span class="line">curl_close($ch);</span><br><span class="line"><span class="keyword">echo</span> $response;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="PHP-curl-GET和POST请求"><a href="#PHP-curl-GET和POST请求" class="headerlink" title="PHP curl GET和POST请求"></a>PHP curl GET和POST请求</h2><p><strong>GET请求</strong><br>get请求直接通过构造url即可</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$data_get = <span class="keyword">array</span>(<span class="string">'a'</span>=&gt;<span class="number">1</span>,<span class="string">'b'</span>=&gt;<span class="number">2</span>);</span><br><span class="line">$url = <span class="string">"http://192.168.101.111/index.php?"</span> . http_build_query($data_get);</span><br><span class="line"><span class="comment">// http://192.168.101.111/index.php?a=1&amp;b=2</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个curl句柄</span></span><br><span class="line">$ch = curl_init();</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置响应选项</span></span><br><span class="line">curl_setopt($ch, CURLOPT_URL, $url);   <span class="comment">// 设置访问的url</span></span><br><span class="line">curl_setopt($ch, CURLOPT_RETURNTRANSFER, <span class="number">1</span>);   <span class="comment">// curl请求执行时，将结果返回，而不是直接输出</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行curl请求，返回结果到变量</span></span><br><span class="line">$response = curl_exec($ch);</span><br><span class="line"></span><br><span class="line"><span class="comment"># 关闭curl句柄</span></span><br><span class="line">curl_close($ch);</span><br><span class="line"><span class="keyword">echo</span> $response;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>POST请求</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$data_post = <span class="keyword">array</span>(<span class="string">'a'</span>=&gt;<span class="number">1</span>,<span class="string">'b'</span>=&gt;<span class="number">2</span>);</span><br><span class="line">$url = <span class="string">"http://192.168.101.111/index.php"</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 创建一个curl句柄</span></span><br><span class="line">$ch = curl_init();</span><br><span class="line"></span><br><span class="line"><span class="comment"># 设置响应选项</span></span><br><span class="line">curl_setopt($ch, CURLOPT_URL, $url);   <span class="comment">// 设置访问的url</span></span><br><span class="line">curl_setopt($ch, CURLOPT_RETURNTRANSFER, <span class="number">1</span>);  <span class="comment">// curl请求执行时，将结果返回，而不是直接输出</span></span><br><span class="line">curl_setopt($ch, CURLOPT_POST, <span class="number">1</span>);      <span class="comment">// 设置为post方式提交</span></span><br><span class="line">curl_setopt($ch, CURLOPT_POSTFIELDS, $data_post);   <span class="comment">// 设置post提交的数据</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 执行curl请求，返回结果到变量</span></span><br><span class="line">$response = curl_exec($ch);</span><br><span class="line"></span><br><span class="line"><span class="comment"># 关闭curl句柄</span></span><br><span class="line">curl_close($ch);</span><br><span class="line"><span class="keyword">echo</span> $response;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="PHP-curl组件相关函数"><a href="#PHP-curl组件相关函数" class="headerlink" title="PHP curl组件相关函数"></a>PHP curl组件相关函数</h2><table>
+    <tbody>
+        <tr>
+            <th>&nbsp;</th>
+            <th><strong>函数名</strong></th>
+            <th><strong>函数介绍</strong></th>
+        </tr>
+        <tr>
+            <td colspan="1" rowspan="15"><strong>基<br>
+                    础<br>
+                    函<br>
+                    数</strong></td>
+            <td>curl_init</td>
+            <td>【常用】初始化一个curl会话，返回一个curl句柄;</td>
+        </tr>
+        <tr>
+            <td>curl_setopt</td>
+            <td>【常用】设置curl选项;</td>
+        </tr>
+        <tr>
+            <td>curl_setopt_array</td>
+            <td>【常用】使用数组的方式批量设置curl选项;</td>
+        </tr>
+        <tr>
+            <td>curl_copy_handle</td>
+            <td>克隆一个curl句柄和它的所有选项;</td>
+        </tr>
+        <tr>
+            <td>curl_exec</td>
+            <td>【常用】执行curl</a>会话;</td>
+        </tr>
+        <tr>
+            <td>curl_pause&nbsp;</td>
+            <td>暂停并取消暂停一个连接(PHP 5.5以上版本);</td>
+        </tr>
+        <tr>
+            <td>curl_reset</td>
+            <td>将curl句柄的所有curl选项重置为默认值(PHP 5.5以上版本);</td>
+        </tr>
+        <tr>
+            <td>curl_getinfo</td>
+            <td>获取curl最后会话信息，包含消耗时间、上传下载字节数、传输速度等信息;</td>
+        </tr>
+        <tr>
+            <td>curl_errno</td>
+            <td>返回curl会话最后一次的数字错误代码;</td>
+        </tr>
+        <tr>
+            <td>curl_error</td>
+            <td>返回curl会话最后一次的字符串错误描述;</td>
+        </tr>
+        <tr>
+            <td>curl_strerror</td>
+            <td>通过curl数字错误代码返回字符串描述(PHP 5.5以上版本);</td>
+        </tr>
+        <tr>
+            <td>curl_close</td>
+            <td>【常用】关闭curl会话;</td>
+        </tr>
+        <tr>
+            <td>curl_escape&nbsp;</td>
+            <td>对指定字符串进行URL编码(PHP 5.5以上版本);</td>
+        </tr>
+        <tr>
+            <td>curl_unescape&nbsp;</td>
+            <td>对指定字符串进行URL解码(PHP 5.5以上版本);</td>
+        </tr>
+        <tr>
+            <td>curl_version</td>
+            <td>以数组的形式返回php curl版本信息;</td>
+        </tr>
+        <tr>
+            <td rowspan="10" colspan="1"><strong>批<br>
+                    处<br>
+                    理</strong></td>
+            <td>curl_multi_init</td>
+            <td>创建一个curl批处理句柄（并发请求）;</td>
+        </tr>
+        <tr>
+            <td>curl_multi_add_handle</td>
+            <td>向curl批处理句柄中添加单独的curl句柄;</td>
+        </tr>
+        <tr>
+            <td>curl_multi_remove_handle</td>
+            <td>从curl批处理句柄中移除某个curl句柄;</td>
+        </tr>
+        <tr>
+            <td>curl_multi_setopt</td>
+            <td>为curl批处理句柄设置选项;</td>
+        </tr>
+        <tr>
+            <td>curl_multi_exec</td>
+            <td>执行curl批处理句柄;</td>
+        </tr>
+        <tr>
+            <td>curl_multi_info_read</td>
+            <td>尝试从curl批处理句柄中获取&nbsp;新curl子请求的完成信息;</td>
+        </tr>
+        <tr>
+            <td>curl_multi_getcontent</td>
+            <td>读取curl批处理句柄中curl子句柄的请求返回内容；</td>
+        </tr>
+        <tr>
+            <td>curl_multi_close</td>
+            <td>关闭curl批处理句柄;</td>
+        </tr>
+        <tr>
+            <td>curl_multi_select&nbsp;</td>
+            <td>等待所有curl批处理中的活动连接;</td>
+        </tr>
+        <tr>
+            <td>curl_multi_strerror</td>
+            <td>通过curl批处理数字错误代码返回字符串描述(PHP 5.5以上版本);</td>
+        </tr>
+        <tr>
+            <td rowspan="3" colspan="1"><strong>共<br>
+                    享<br>
+                    句<br>
+                    柄</strong></td>
+            <td>curl_share_init</td>
+            <td>初始化一个curl共享句柄(PHP 5.5以上版本);</td>
+        </tr>
+        <tr>
+            <td>curl_share_setopt</td>
+            <td>为 curl共享句柄设置选项(PHP 5.5以上版本);</td>
+        </tr>
+        <tr>
+            <td>curl_share_close</td>
+            <td>关闭curl共享句柄(PHP 5.5以上版本);</td>
+        </tr>
+        <tr>
+            <td><strong>其<br>
+                    他</strong></td>
+            <td>curl_file_create</td>
+            <td>创建一个curlfile对象(PHP 5.5以上版本);</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2 id="PHP-curl-setopt函数选项合集"><a href="#PHP-curl-setopt函数选项合集" class="headerlink" title="PHP curl_setopt函数选项合集"></a>PHP curl_setopt函数选项合集</h2><table>
+    <tbody>
+        <tr>
+            <th>组</th>
+            <th>选项名称</th>
+            <th>值类型</th>
+            <th>描述</th>
+        </tr>
+        <tr>
+            <th rowspan="7" colspan="1">网址</th>
+            <td>CURLOPT_URL</td>
+            <td>string</td>
+            <td>【必须】指定需要获取的URL地址，也可以在curl_init()函数初始化会话的时候作为参数传入。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PATH_AS_IS</td>
+            <td>bool</td>
+            <td>是否不处理URL中的"../"。（curl 7.42.0、PHP 7.0.7以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_DEFAULT_PROTOCOL</td>
+            <td>string</td>
+            <td>指定URL不带协议的时候，使用的默认协议(PHP&nbsp;7.0.7以上版本)。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_HTTP_VERSION</td>
+            <td>integer</td>
+            <td>使用的HTTP版本：CURL_HTTP_VERSION_NONE (默认值，让 curl选择)，CURL_HTTP_VERSION_1_0 (强制使用
+                HTTP/1.0)或CURL_HTTP_VERSION_1_1 (强制使用 HTTP/1.1)。 &nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PORT</td>
+            <td>integer</td>
+            <td>指定连接端口，替换 URL 中的主机和端口。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_CONNECT_TO</td>
+            <td>array</td>
+            <td>连接到指定的主机和端口，替换 URL 中的主机和端口。接受指定字符串格式的数组： HOST:PORT:CONNECT-TO-HOST:CONNECT-TO-PORT。（ curl 7.49.0， PHP
+                7.0.7以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_CONNECT_ONLY</td>
+            <td>bool</td>
+            <td>是否只做代理、验证、连接过程，但不传输数据。此选项用于 HTTP、SMTP 和 POP3。</td>
+        </tr>
+        <tr>
+            <th rowspan="5" colspan="1">重<br>
+                定<br>
+                向</th>
+            <td>CURLOPT_FOLLOWLOCATION</td>
+            <td>bool</td>
+            <td>【常用】是否根据服务器返回的http头"Location:"信息，自定重定向到相关页面。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_MAXREDIRS</td>
+            <td>integer</td>
+            <td>指定递归重定向的最大次数。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_AUTOREFERER</td>
+            <td>bool</td>
+            <td>"Location:"重定向时，是否自动设置header的"Referer:"信息。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_UNRESTRICTED_AUTH</td>
+            <td>bool</td>
+            <td>是否CURLOPT_FOLLOWLOCATION重定向 header 中的多个 location 时继续发送用户名和密码信息，哪怕主机名已改变。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_POSTREDIR</td>
+            <td>integer</td>
+            <td>位掩码， 设置当CURLOPT_FOLLOWLOCATION时， 么情况下需要再次 HTTP POST 到重定向网址：<br>
+                1 (301 永久重定向)；<br>
+                2 (302 Found)<br>
+                4 (303 See Other) ，<br>
+                可以使用组合的形式：，如： 1 | 2。</td>
+        </tr>
+        <tr>
+            <th rowspan="6" colspan="1">请<br>
+                求<br>
+                头</th>
+            <td>CURLOPT_HTTPGET</td>
+            <td>bool</td>
+            <td>TRUE时会设置http的METHOD为GET（默认即为GET，所有只有METHOD被修改时才使用此选项）。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_CUSTOMREQUEST</td>
+            <td>string</td>
+            <td>HTTP请求时，指定自定义的Method，如：GET、POST、PUT、DELETE等。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_USERAGENT</td>
+            <td>string</td>
+            <td>【常用】设置HTTP请求头"User-Agent: "字段值信息，用来伪装浏览器信息，让<a href="http://aiezu.com/article/php_curl.html"
+                    target="_blank">curl</a>抓取更像真实的浏览器访问。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_REFERER</td>
+            <td>string</td>
+            <td>【常用】设置HTTP请求头"Referer:" 字段值信息，用来伪装来路信息，让curl抓取更像真实的浏览器访问。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_ENCODING</td>
+            <td>string</td>
+            <td>设置HTTP请求头中"Accept-Encoding: "的值，支持的编码有"identity"、"deflate"和"gzip"，如果为空字符串""，会发送所有支持的编码类型 (curl
+                7.10以上版本)。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_HTTPHEADER</td>
+            <td>array</td>
+            <td>【常用】以数组的形式设置http请求头信息，如：<br>
+                array('Referer: http://aiezu.com', 'Accept-Language: zh-CN,zh;q=0.8')</td>
+        </tr>
+        <tr>
+            <th rowspan="4" colspan="1">cook<br>
+                ies</th>
+            <td>CURLOPT_COOKIE</td>
+            <td>string</td>
+            <td>【常用】设定HTTP请求头中"Cookie: "部分的内容，多个cookie用分号分隔，分号后带一个空格，如： "name=aiezu; site=aiezu.com"。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_COOKIEFILE</td>
+            <td>string</td>
+            <td>【常用】从指定文件中读取cookie，并发送到http服务，文件中的cookie必须为Netscape格式。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_COOKIEJAR</td>
+            <td>string</td>
+            <td>【常用】将HTTP响应头中的cookie保存到指定文件。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_COOKIESESSION</td>
+            <td>bool</td>
+            <td>是否开启新的一次cookie会话，忽略之前存储的cookie会话信息。</td>
+        </tr>
+        <tr>
+            <th rowspan="8" colspan="1">代理</th>
+            <td>CURLOPT_HTTPPROXYTUNNEL</td>
+            <td>bool</td>
+            <td>设置为TRUE时会通过指定的HTTP代理来传输。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PROXY</td>
+            <td>string</td>
+            <td>【常用】指定代理信息，如：8.8.8.8:8080，socks5://8.8.8.8:88。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PROXYPORT</td>
+            <td>string</td>
+            <td>指定代理服务器端口。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PROXYTYPE</td>
+            <td>integer</td>
+            <td>指定代理服务器类型，支持的值：CURLPROXY_HTTP (默认值) CURLPROXY_SOCKS4、 CURLPROXY_SOCKS5、 CURLPROXY_SOCKS4A 或
+                CURLPROXY_SOCKS5_HOSTNAME;(cURL 7.10以上版本)。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PROXYAUTH</td>
+            <td>integer</td>
+            <td>代理连接的认证方式，使用在CURLOPT_HTTPAUTH中的位掩码，当前仅支持 CURLAUTH_BASIC和CURLAUTH_NTLM (cURL 7.10以上版本)。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PROXYUSERPWD</td>
+            <td>string</td>
+            <td>一个用来连接到代理的"[username]:[password]"格式的字符串。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PROXYHEADER</td>
+            <td>array</td>
+            <td>传给代理的自定义HTTP头;（curl 7.37.0, &nbsp;PHP 7.0.7以上版本)。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PROXY_SERVICE_NAME</td>
+            <td>string</td>
+            <td>代理验证服务的名称（curl 7.34.0, &nbsp;PHP 7.0.7以上版本)。</td>
+        </tr>
+        <tr>
+            <th rowspan="8" colspan="1">POST<br>
+                /<br>
+                PUT</th>
+            <td>CURLOPT_POST</td>
+            <td>bool</td>
+            <td>【常用】设置为TRUE时将强制以标准POST方式发送请求，标准POST方式HTML表单类型为"application/x-www-form-urlencoded"；注意：如果此选项设置为TRUE，而CURLOPT_POSTFIELDS的参数为数组，那么数据将不会被提交到服务器。
+            </td>
+        </tr>
+        <tr>
+            <td>CURLOPT_POSTFIELDS</td>
+            <td>array<br>
+                string</td>
+            <td>【常用】指定要使用HTTP协议中的"POST"方式来发送的数据； 接受两种格式的数据类型：<br>
+                1、字符串格式：&nbsp;这种格式是urlencoded后的字符串，类似'para1=val1&amp;para2=val2&amp;...'形式，这种格式通过HTML表单类型为"application/x-www-form-urlencoded"方式提交到服务器；<br>
+                2、数组格式：这种格式是以字段名为键名，字段值为键值的数组，这种格式通过HTML表单类型为"multipart/form-data"方式提交到服务器，因此，数组格式可以用来发送文件；如要发送文件，在文件名完整路径前面加上“@”前缀，
+                文件类型可在文件名后以 ';type=mimetype' 的格式指定；从PHP 5.5.0开始, “@“前缀已被废弃，文件可通过CURLFile 发送; 如：<br>
+                array('pic'=&gt;'@/tmp/aiezu.com.png')<br>
+                换成：<br>
+                array('pic'=&gt;new CURLFile('/tmp/aiezu.com.png'))</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SAFE_UPLOAD</td>
+            <td>bool</td>
+            <td>设置为TRUE时，禁用"@"前缀发送文件，以增加安全性，这时发送文件可以通过CURLFile方式;(PHP 5.5添加此选项，PHP 7移除了此选项)</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PUT</td>
+            <td>bool</td>
+            <td>【常用】设置为TRUE时，允许以HTTP PUT方式发送文件，此时必须设置CURLOPT_INFILE、CURLOPT_INFILESIZE选项;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_INFILE</td>
+            <td>string</td>
+            <td>【常用】http put方式上传文件时需要读取的文件;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_INFILESIZE&nbsp;</td>
+            <td>integer</td>
+            <td>【常用】http put方式上传文件时需要读取的文件长度;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_READFUNCTION</td>
+            <td>functionR</td>
+            <td>【常用】设置一个回调函数来，对HTTP PUT文件进行读取处理。此函数包含三个参数：<br>
+                　　参数一为curl的资源句柄；<br>
+                　　参数二为设置在CURLOPT_INFILE选项中，要读取文件的资源句柄；<br>
+                　　参数三为允许读取的最大数据数量；<br>
+                函数返回当前读取到的字符串，返回空字符串作为&nbsp;EOF（文件结束） 信号。</td>
+        </tr>
+        <tr>
+            <th rowspan="8" colspan="1">认证</th>
+            <td>CURLOPT_HTTPAUTH</td>
+            <td>integer</td>
+            <td>【常用】使用的HTTP验证方法，可以是：CURLAUTH_BASIC、 CURLAUTH_DIGEST、 CURLAUTH_GSSNEGOTIATE、 CURLAUTH_NTLM、 CURLAUTH_ANY和
+                CURLAUTH_ANYSAFE，可以使用 | 位域(OR)操作符结合多个值，curl会让服务器选择支持的方法，并选择最好的那个;<br>
+                　　CURLAUTH_ANY是 CURLAUTH_BASIC | CURLAUTH_DIGEST | CURLAUTH_GSSNEGOTIATE | CURLAUTH_NTLM 的别名，<br>
+                　　CURLAUTH_ANYSAFE 是 CURLAUTH_DIGEST | CURLAUTH_GSSNEGOTIATE | CURLAUTH_NTLM 的别名。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_USERNAME</td>
+            <td>string</td>
+            <td>【常用】验证中使用的用户名;（curl 7.19.1, PHP 5.5.0以上版本）。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_USERPWD</td>
+            <td>string</td>
+            <td>【常用】验证需要的用户名和密码，格式为："[username]:[password]"。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SERVICE_NAME</td>
+            <td>string</td>
+            <td>验证服务的名称（curl 7.43.0, PHP 7.0.7以上版本）。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_LOGIN_OPTIONS</td>
+            <td>string</td>
+            <td>可以设置特定的登录选项，如通过"AUTH=NTLM" 或者"AUTH=*"设置首选的登录选项，并结合CURLOPT_USERNAME 选项使用；（curl&nbsp;7.34.0,
+                PHP&nbsp;7.0.7以上版本）。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_NETRC</td>
+            <td>bool</td>
+            <td>是否使用~/.netrc文件获取用户名和密码来连接远程站点。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_KRB4LEVEL</td>
+            <td>string</td>
+            <td>KRB4 (Kerberos
+                4)安全级别，安全级别从低到高一次是："clear"、"safe"、"confidential"、"private"，默认为"private"，这个选项设置为NULL时将禁用KRB4安全认证，目前 KRB4
+                安全认证只能用于FTP传输。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_XOAUTH2_BEARER</td>
+            <td>string</td>
+            <td>指定OAuth 2.0 access token;（curl&nbsp;7.33.0, PHP&nbsp;7.0.7以上版本）。</td>
+        </tr>
+        <tr>
+            <th rowspan="7" colspan="1">证书</th>
+            <td>CURLOPT_SSLCERT</td>
+            <td>string</td>
+            <td>【常用】指定一个SSL证书文件名;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSLCERTPASSWD</td>
+            <td>string</td>
+            <td>【常用】使用CURLOPT_SSLCERT证书需要的密码;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSLCERTTYPE</td>
+            <td>string</td>
+            <td>指定证书格式类型，支持的格式有"PEM" (默认值)、"DER"和"ENG"; &nbsp; &nbsp;（curl&nbsp;7.9.3以上版本)</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_CAPATH</td>
+            <td>string</td>
+            <td>一个保存着多个CA证书的目录,这个选项配合CURLOPT_SSL_VERIFYPEER一起使用的。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_CAINFO</td>
+            <td>string</td>
+            <td>【常用】一个保存着一个或多个用来让服务端验证的证书的文件名，这个参数仅仅在和CURLOPT_SSL_VERIFYPEER一起使用时才有意义，可能需要绝对路径。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSL_VERIFYPEER</td>
+            <td>bool</td>
+            <td>【常用】是否禁止curl验证对等证书（peer's certificate），默认为FALSE；要验证的交换证书可以在 CURLOPT_CAINFO 选项中设置，或在
+                CURLOPT_CAPATH中设置证书目录；自cURL 7.10开始默认为 TRUE，从cURL 7.10开始默认绑定安装。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSL_VERIFYSTATUS</td>
+            <td>bool</td>
+            <td>验证证书状态;（curl&nbsp;7.41.0, PHP&nbsp;7.0.7以上版本）&nbsp;</td>
+        </tr>
+        <tr>
+            <th rowspan="8" colspan="1">密钥</th>
+            <td>CURLOPT_SSLKEY</td>
+            <td>string</td>
+            <td>指定一个SSL私玥文件名。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSLKEYPASSWD</td>
+            <td>string</td>
+            <td>SSL私钥的密码;(由于此选项包含了敏感的密码信息，记得保证这个PHP脚本的安全。)</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_KEYPASSWD</td>
+            <td>string</td>
+            <td>使用CURLOPT_SSLKEY或CURLOPT_SSH_PRIVATE_KEYFILE 私钥时候的密码;（curl 7.16.1以上版本）。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSLKEYTYPE</td>
+            <td>string</td>
+            <td>CURLOPT_SSLKEY中指定的私钥的加密类型，支持的私钥类型为"PEM"(默认值)、"DER"和"ENG"。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSLENGINE</td>
+            <td>string</td>
+            <td>用来在CURLOPT_SSLKEY中指定的SSL私钥的加密引擎变量。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSLENGINE_DEFAULT</td>
+            <td>string</td>
+            <td>用来做非对称加密操作的变量。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_RANDOM_FILE</td>
+            <td>string</td>
+            <td>指定一个用来生成 SSL 随机数种子的文件名。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_EGDSOCKET</td>
+            <td>string</td>
+            <td>Like CURLOPT_RANDOM_FILE, except a filename to an Entropy Gathering Daemon socket。</td>
+        </tr>
+        <tr>
+            <th rowspan="8" colspan="1">SSL<br>
+                选项</th>
+            <td>CURLOPT_SSL_FALSESTART</td>
+            <td>bool</td>
+            <td>是否开启 TLS False Start （一种 TLS 握手优化方式），默认TRUE； &nbsp;（curl&nbsp;7.42.0, PHP&nbsp;7.0.7以上版本）&nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSL_CIPHER_LIST</td>
+            <td>string</td>
+            <td>一个SSL的加密算法列表，例如RC4-SHA和TLSv1都是可用的加密列表。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSL_OPTIONS</td>
+            <td>integer</td>
+            <td>设置SSL行为选项，可以是：<br>
+                　　CURLSSLOPT_ALLOW_BEAST：&nbsp;do not attempt to use any workarounds for a security flaw in the SSL3 and
+                TLS1.0 protocols.&nbsp;<br>
+                　　CURLSSLOPT_NO_REVOKE：disable certificate revocation checks for those SSL backends where such behavior
+                is present.<br>
+                （curl&nbsp;7.25.0, PHP&nbsp;7.0.7以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSL_VERIFYHOST</td>
+            <td>integer</td>
+            <td>【常用】可能的值：<br>
+                0&nbsp;：为不检查名称（默认）；<br>
+                1&nbsp;：检查服务器SSL证书中是否存在一个公用名(common name)（curl 7.28.1以下版本才支持）；<br>
+                2&nbsp;：会检查公用名是否存在，并且是否与提供的主机名匹配。&nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSL_ENABLE_ALPN</td>
+            <td>bool</td>
+            <td>是否禁用SSL握手中的 ALPN (如果SSL后端的libcurl内建支持) 用于协商到http2，默认为FALSE; &nbsp;（curl&nbsp;7.36.0, PHP&nbsp;7.0.7以上版本）
+            </td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSL_ENABLE_NPN</td>
+            <td>bool</td>
+            <td>是否禁用SSL握手中的 NPN(如果 SSL 后端的 libcurl 内建支持)，用于协商到 http2，默认为FALSE;&nbsp;&nbsp;（curl&nbsp;7.36.0,
+                PHP&nbsp;7.0.7以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSLVERSION</td>
+            <td>integer</td>
+            <td>指定SSL版本，CURL_SSLVERSION_DEFAULT (0), CURL_SSLVERSION_TLSv1 (1), CURL_SSLVERSION_SSLv2 (2),
+                CURL_SSLVERSION_SSLv3 (3), CURL_SSLVERSION_TLSv1_0 (4), CURL_SSLVERSION_TLSv1_1 (5) ，
+                CURL_SSLVERSION_TLSv1_2 (6) 中的其中一个，最好不要设置此选项，使用默认值即可，设置为 2 或 3 比较危险，在 SSLv2 和 SSLv3 中有弱点存在。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_CERTINFO</td>
+            <td>bool</td>
+            <td>是否将在安全传输时输出SSL证书信息到 STDERR，默认为TRUE，需要设置CURLOPT_VERBOSE选项为TRUE才有效;&nbsp;（curl&nbsp;7.19.1,
+                PHP&nbsp;5.3.2以上版本）</td>
+        </tr>
+        <tr>
+            <th rowspan="4" colspan="1">SSH<br>
+                选项</th>
+            <td>CURLOPT_SSH_PRIVATE_KEYFILE</td>
+            <td>string</td>
+            <td>指定ssh私钥文件，如果未设置，默认为$HOME/.ssh/id_dsa;（curl&nbsp;7.16.1以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSH_PUBLIC_KEYFILE</td>
+            <td>string</td>
+            <td>指定ssh公钥文件，如果未设置，默认为$HOME/.ssh/id_dsa.pub;（curl&nbsp;7.16.1以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSH_HOST_PUBLIC_KEY_MD5</td>
+            <td>string</td>
+            <td>远程主机公钥（public key） 的 MD5 校验值，有32位16进制组成，在不匹配的时候curl拒绝连接，此选项仅用于 SCP 和 SFTP 的传输;（curl&nbsp;7.17.1以上版本）
+            </td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SSH_AUTH_TYPES</td>
+            <td>integer</td>
+            <td>一个或者多个有位掩码"|"连接的值，包含如下： CURLSSH_AUTH_PUBLICKEY、 CURLSSH_AUTH_PASSWORD、 CURLSSH_AUTH_HOST、
+                CURLSSH_AUTH_KEYBOARD，或者设置成CURLSSH_AUTH_ANY让curl自己选择; （curl&nbsp;7.16.1以上版本）</td>
+        </tr>
+        <tr>
+            <th rowspan="13" colspan="1">FTP</th>
+            <td>CURLOPT_FTPPORT</td>
+            <td>string</td>
+            <td>这个值将被用来获取供FTP"PORT"指令所需要的IP地址，"PORT"
+                指令告诉远程服务器连接到我们指定的IP地址，这个字符串可以是纯文本的IP地址、主机名、一个网络接口名（UNIX下）或者只是一个'-'来使用默认的 IP 地址。&nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FTPSSLAUTH</td>
+            <td>integer</td>
+            <td>FTP验证方式：CURLFTPAUTH_SSL (首先尝试SSL)、CURLFTPAUTH_TLS (首先尝试TLS)、CURLFTPAUTH_DEFAULT
+                (让curl自行决定)。（curl&nbsp;7.12.2以上版本）。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FTP_FILEMETHOD</td>
+            <td>integer</td>
+            <td>告诉curl使用哪种方式来获取 FTP(s) 服务器上的文件。可能的值有： CURLFTPMETHOD_MULTICWD、 CURLFTPMETHOD_NOCWD 和
+                CURLFTPMETHOD_SINGLECWD。（curl&nbsp;&nbsp;7.15.1，PHP 5.3.0以上版本）。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_TRANSFERTEXT</td>
+            <td>bool</td>
+            <td>FTP是否使用使用ASCII模式传输，默认为TRUE，对于LDAP，它检索纯文本信息而非 HTML，在 Windows 系统上，系统不会把 STDOUT 设置成二进制 模式。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FTPASCII</td>
+            <td>bool</td>
+            <td>CURLOPT_TRANSFERTEXT的别名。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FTPLISTONLY</td>
+            <td>bool</td>
+            <td>是否只列出 FTP 目录的名字。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FTPAPPEND</td>
+            <td>bool</td>
+            <td>是否为追加写入文件，而不是覆盖。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FTP_CREATE_MISSING_DIRS</td>
+            <td>bool</td>
+            <td>是否自动创建不存在的ftp目录。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_QUOTE</td>
+            <td>array</td>
+            <td>数组，一组先于 FTP 请求的在服务器上执行的FTP命令。&nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_POSTQUOTE</td>
+            <td>array</td>
+            <td>数组，在 FTP 请求执行完成后，在服务器上执行的一组array格式的 FTP 命令。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_TFTP_NO_OPTIONS</td>
+            <td>bool</td>
+            <td>是否不发送 TFTP 的 options 请求。（curl&nbsp;&nbsp;7.48.0&nbsp;，PHP 7.0.7&nbsp;以上版本）&nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FTP_USE_EPRT</td>
+            <td>bool</td>
+            <td>TRUE 时，当 FTP 下载时，使用 EPRT (和 LPRT)命令， 设置为 FALSE 时禁用 EPRT 和 LPRT，仅仅使用PORT 命令。&nbsp;&nbsp; &nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FTP_USE_EPSV</td>
+            <td>bool</td>
+            <td>TRUE 时，在FTP传输过程中，回到 PASV 模式前，先尝试 EPSV 命令，设置为 FALSE 时禁用 EPSV。</td>
+        </tr>
+        <tr>
+            <th rowspan="2" colspan="1">断点<br>
+                续传</th>
+            <td>CURLOPT_RANGE</td>
+            <td>string</td>
+            <td>【常用】指定字节为单位的数据获取范围，可以用”N-M”的形式，多个范围用逗号分隔，如："0-5,100-101"(仅HTTP GET有效)。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_RESUME_FROM</td>
+            <td>integer</td>
+            <td>指定字节为单位的数据起始偏移量(仅HTTP GET有效)。</td>
+        </tr>
+        <tr>
+            <th rowspan="4" colspan="1">速率<br>
+                限制</th>
+            <td>CURLOPT_LOW_SPEED_LIMIT</td>
+            <td>integer</td>
+            <td>传输速度，每秒字节（bytes）数，根据CURLOPT_LOW_SPEED_TIME秒数统计是否因太慢而取消传输。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_LOW_SPEED_TIME</td>
+            <td>integer</td>
+            <td>当传输速度小于CURLOPT_LOW_SPEED_LIMIT时(bytes/sec)，PHP会判断是否因太慢而取消传输。&nbsp;&nbsp; &nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_MAX_RECV_SPEED_LARGE</td>
+            <td>integer</td>
+            <td>如果下载速度超过了此速度(以每秒字节数来统计) ，即传输过程中累计的平均数，传输就会降速到这个参数的值。默认不限速。 ( curl 7.15.5、PHP 5.4.0以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_MAX_SEND_SPEED_LARGE</td>
+            <td>integer</td>
+            <td>CURLOPT_MAX_SEND_SPEED_LARGE&nbsp;&nbsp; &nbsp;如果上传的速度超过了此速度(以每秒字节数来统计)，即传输过程中累计的平均数
+                ，传输就会降速到这个参数的值。默认不限速。&nbsp;&nbsp;( curl 7.15.5、PHP 5.4.0以上版本）</td>
+        </tr>
+        <tr>
+            <th rowspan="8" colspan="1">连接<br>
+                选项</th>
+            <td>CURLOPT_MAXCONNECTS</td>
+            <td>integer</td>
+            <td>允许的最大连接数量，达到限制时，会通过CURLOPT_CLOSEPOLICY决定应该关闭哪些连接。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_CONNECTTIMEOUT</td>
+            <td>integer</td>
+            <td>在尝试连接时等待的秒数，设置为0，则无限等待。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_CONNECTTIMEOUT_MS</td>
+            <td>integer</td>
+            <td>在尝试连接时等待的毫秒数，设置为0，则无限等待。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_TIMEOUT</td>
+            <td>integer</td>
+            <td>允许<a href="http://aiezu.com/article/php_curl.html" target="_blank">curl</a>数执行的最长秒数。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_TIMEOUT_MS</td>
+            <td>integer</td>
+            <td>允许curl数执行的最长毫秒数。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_EXPECT_100_TIMEOUT_MS</td>
+            <td>integer</td>
+            <td>超时预计： 100毫秒内的 continue 响应 默认为 1000毫秒。（curl 7.36.0、PHP 7.0.7以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_DNS_USE_GLOBAL_CACHE</td>
+            <td>bool</td>
+            <td>是否开启DNS缓存，默认TRUE。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_DNS_CACHE_TIMEOUT</td>
+            <td>integer</td>
+            <td>设置DNS在内存中缓存的时间，默认为120秒。</td>
+        </tr>
+        <tr>
+            <th rowspan="4" colspan="1">响应<br>
+                选项</th>
+            <td>CURLOPT_BINARYTRANSFER</td>
+            <td>bool</td>
+            <td>设置CURLOPT_RETURNTRANSFER 是否以原生的（Raw）数据格式返回。 从 PHP 5.1.3 开始，此选项不再有效，永远以原生数据格式返回。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_RETURNTRANSFER</td>
+            <td>bool</td>
+            <td>【常用】将curl_exec()获取的信息以字符串返回，而不是直接输出。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_TIMECONDITION</td>
+            <td>integer</td>
+            <td>设置如何对待CURLOPT_TIMEVALUE的时间。<br>
+                　　CURL_TIMECOND_IFMODSINCE（默认）：仅在页面CURLOPT_TIMEVALUE之后修改，才返回页面，没有修改则返回"304 Not Modified"头。<br>
+                如果设置了CURLOPT_HEADER为TRUE，CURL_TIMECOND_IFUNMODSINCE则起相反的效果。&nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_TIMEVALUE</td>
+            <td>integer</td>
+            <td>从1970年1月1日开始的秒数时间戳，这个时间戳提供给CURLOPT_TIMECONDITION选项判断。</td>
+        </tr>
+        <tr>
+            <th rowspan="4" colspan="1">响<br>
+                应<br>
+                头</th>
+            <td>CURLOPT_HEADER</td>
+            <td>bool</td>
+            <td>【常用】为TRUE时会将HTTP头/文件头信息作为数据输出。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_WRITEHEADER</td>
+            <td>stream</td>
+            <td>将响应头信息的内容的写入到指定地方，如写入到文件，则传fopen()函数返回的流资源句柄。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_HEADERFUNCTION</td>
+            <td>function</td>
+            <td>【常用】设置一个回调函数来处理响应头信息，此函数必须包含两个参数，参数一为curl的资源句柄，参数二为curl传入的响应头信息，函数必须返回参数二的长度，用来告诉curl成功接收到了传入头信息；</td>
+        </tr>
+        <tr>
+            <td>CURLINFO_HEADER_OUT</td>
+            <td>bool</td>
+            <td>是否追踪句柄的请求字符串。</td>
+        </tr>
+        <tr>
+            <th rowspan="5" colspan="1">响应<br>
+                BODY</th>
+            <td>CURLOPT_NOBODY</td>
+            <td>bool</td>
+            <td>【常用】设置为TRUE时，不会再输出BODY部分，同时METHOD变成HEAD;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FILE</td>
+            <td>stream</td>
+            <td>【常用】设置响应BODY要写入到指定地方，如写入到文件，则传fopen()函数返回的流资源句柄。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_WRITEFUNCTION</td>
+            <td>function</td>
+            <td>【常用】设置一个回调函数来处理响应BODY信息，此函数必须包含两个参数，参数一为curl的资源句柄，参数二为curl传入的响应BODY信息，函数必须返回参数二的长度，用来告诉curl成功接收到了传入响应BODY信息；
+            </td>
+        </tr>
+        <tr>
+            <td>CURLOPT_NOPROGRESS</td>
+            <td>bool</td>
+            <td>是否关闭进度统计功能，默认为TRUE。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PROGRESSFUNCTION</td>
+            <td>function</td>
+            <td>【常用】设置一个回调函数来处理上传下载的进度，函数必须有五个参数：<br>
+                参数一：是curl的资源句柄；<br>
+                参数二：预计要下载的总字节（bytes）数；<br>
+                参数三：目前下载的字节数；<br>
+                参数四：预计传输中总上传字节数；<br>
+                参数五：目前上传的字节数。<br>
+                返回非零值将中断传输，并返回CURLE_ABORTED_BY_CALLBACK错误。只有设置 CURLOPT_NOPROGRESS 选项为 FALSE 时才会调用这个回调函数。</td>
+        </tr>
+        <tr>
+            <th rowspan="6" colspan="1">调试<br>
+                选项</th>
+            <td>CURLOPT_VERBOSE</td>
+            <td>bool</td>
+            <td>【常用】<a href="http://aiezu.com/article/php_curl.html"
+                    target="_blank">curl</a>是否输出所有调试信息，写入到STDERR，或在CURLOPT_STDERR中指定的文件，默认为FALSE。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_STDERR</td>
+            <td>stream</td>
+            <td>设置错误信息要写入到指定地方，如写入到文件，则传fopen()函数返回的流资源句柄，默认为STDERR。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_NOSIGNAL</td>
+            <td>bool</td>
+            <td>是否忽略所有的cURL传递给PHP进行的信号。在 SAPI 多线程传输时此项被默认启用，所以超时选项仍能使用。（curl 7.10以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FAILONERROR</td>
+            <td>bool</td>
+            <td>设置为TRUE时，当 HTTP 状态码大于等于 400，TRUE 将将显示错误详情。 默认情况下将返回页面，忽略 HTTP 代码。&nbsp;&nbsp; &nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_HTTP200ALIASES</td>
+            <td>array</td>
+            <td>数组,HTTP 200 响应码数组，数组中的响应码被认为是正确的响应，而非错误。（ curl 7.10.3以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FILETIME</td>
+            <td>bool</td>
+            <td>是否尝试获取远程文档中的修改时间信息。获取到的修改时间可以通过 curl_getinfo()函数查看。&nbsp;&nbsp; &nbsp;</td>
+        </tr>
+        <tr>
+            <th rowspan="9" colspan="1">网络<br>
+                选项</th>
+            <td>CURLOPT_INTERFACE</td>
+            <td>string</td>
+            <td>curl通过指定接口（interface）进行数据传输。可以是一个网口名、IP 地址或者是一个主机名。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_IPRESOLVE</td>
+            <td>integer</td>
+            <td>允许curl选择想要解析的IP地址类别，只有在地址有多种ip类别的时候才能用，可以的值有： CURL_IPRESOLVE_WHATEVER（默认）、 CURL_IPRESOLVE_V4、
+                CURL_IPRESOLVE_V6 （curl 7.10.8以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_UNIX_SOCKET_PATH</td>
+            <td>string</td>
+            <td>使用指定的&nbsp;Unix 套接字作为连接。（cURL 7.40.0、PHP 7.0.7以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FORBID_REUSE</td>
+            <td>bool</td>
+            <td>在完成交互以后，是否强制断开连接，此链接将不能在连接池中重用。&nbsp;&nbsp; &nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_FRESH_CONNECT</td>
+            <td>&nbsp;</td>
+            <td>强制获取一个新的连接，而不是使用连接池中的链接。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_TCP_NODELAY</td>
+            <td>bool</td>
+            <td>是否禁用 TCP 的 Nagle 算法。 &nbsp;</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_TCP_FASTOPEN</td>
+            <td>bool</td>
+            <td>是否开启TCP Fast Open。（ curl&nbsp;7.49.0、 PHP 7.0.7以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_SASL_IR</td>
+            <td>bool</td>
+            <td>是否收到首包(first packet)后发送初始的响应(initial response)。（curl 7.31.10、PHP 7.0.7以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_STREAM_WEIGHT</td>
+            <td>integer</td>
+            <td>设置 stream weight 数值 ( 1 和 256 之间的数字)。（curl&nbsp;7.46.0、PHP 7.0.7以上版本）&nbsp;</td>
+        </tr>
+        <tr>
+            <th rowspan="5" colspan="1">杂项</th>
+            <td>CURLOPT_CRLF</td>
+            <td>bool</td>
+            <td>启用时将Unix的换行符转换成回车换行符。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PIPEWAIT</td>
+            <td>bool</td>
+            <td>是否等待&nbsp;pipelining/multiplexing。（curl 7.43.0、PHP 7.0.7以上版本）</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_CLOSEPOLICY</td>
+            <td>integer</td>
+            <td>CURLCLOSEPOLICY_* 中的一个。</td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PINNEDPUBLICKEY</td>
+            <td>string</td>
+            <td>Set the pinned public key. The string can be the file name of your pinned public key. The file format
+                expected is "PEM" or "DER". The string can also be any number of base64 encoded sha256 hashes preceded
+                by "sha256//" and separated by ";".&nbsp;&nbsp; &nbsp;Added in cURL 7.39.0. Available since PHP 7.0.7.
+            </td>
+        </tr>
+        <tr>
+            <td>CURLOPT_PRIVATE</td>
+            <td>string</td>
+            <td>Any data that should be associated with this cURL handle. This data can subsequently be retrieved with
+                the CURLINFO_PRIVATE option of curl_getinfo(). cURL does nothing with this data. When using a cURL multi
+                handle, this private data is typically a unique key to identify a standard cURL handle.&nbsp;&nbsp;
+                &nbsp;Added in cURL 7.10.3.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h1 id="file-get-contents"><a href="#file-get-contents" class="headerlink" title="file_get_contents"></a>file_get_contents</h1><p>语法：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file_get_contents(path, include_path, context, start, max_length)</span><br></pre></td></tr></table></figure>
+<table>
+    <tbody>
+        <tr>
+            <th align="left" valign="top" width="13%">参数</th>
+            <th align="left" valign="top" width="87%">描述</th>
+        </tr>
+        <tr>
+            <td valign="top">path</td>
+            <td valign="top">必需。规定要读取的文件，或者url。</td>
+        </tr>
+        <tr>
+            <td valign="top">include_path</td>
+            <td valign="top">可选。如果您还想在 include_path（在 php.ini 中）中搜索文件的话，请设置该参数为 '1'。</td>
+        </tr>
+        <tr>
+            <td valign="top">context</td>
+            <td valign="top">可选。规定文件句柄的环境。context 是一套可以修改流的行为的选项。若使用 NULL，则忽略。</td>
+        </tr>
+        <tr>
+            <td valign="top">start</td>
+            <td valign="top">可选。规定在文件中开始读取的位置。该参数是 PHP 5.1 中新增的。</td>
+        </tr>
+        <tr>
+            <td valign="top">max_length</td>
+            <td valign="top">可选。规定读取的字节数。该参数是 PHP 5.1 中新增的。</td>
+        </tr>
+    </tbody>
+</table>
+
+<p><strong>提示</strong>：该函数是二进制安全的。（意思是二进制数据（如图像）和字符数据都可以使用此函数写入）</p>
+<h2 id="GET请求"><a href="#GET请求" class="headerlink" title="GET请求"></a>GET请求</h2><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$data_get = <span class="keyword">array</span>(<span class="string">'a'</span>=&gt;<span class="number">1</span>,<span class="string">'b'</span>=&gt;<span class="number">2</span>);</span><br><span class="line">$url = <span class="string">"http://192.168.101.111/index.php?"</span> . http_build_query($data_get);</span><br><span class="line"></span><br><span class="line">$res = file_get_contents($url);</span><br><span class="line"><span class="keyword">echo</span> $res;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<h2 id="POST请求"><a href="#POST请求" class="headerlink" title="POST请求"></a>POST请求</h2><p>结合<code>stream_context_create</code>函数构造资源流上下文</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$data_post = <span class="keyword">array</span>(<span class="string">'a'</span>=&gt;<span class="number">1</span>,<span class="string">'b'</span>=&gt;<span class="number">2</span>);</span><br><span class="line">$url = <span class="string">'http://192.168.101.111/index.php'</span>;</span><br><span class="line"></span><br><span class="line">$content = http_build_query($data_post);   <span class="comment">// 构造post请求数据</span></span><br><span class="line">$content_length = strlen($content);        <span class="comment">// post请求体长度</span></span><br><span class="line">$options = <span class="keyword">array</span>(               <span class="comment">//http请求头</span></span><br><span class="line">    <span class="string">'http'</span> =&gt; <span class="keyword">array</span>(</span><br><span class="line">        <span class="string">'method'</span> =&gt; <span class="string">'POST'</span>,</span><br><span class="line">        <span class="string">'header'</span> =&gt;</span><br><span class="line">            <span class="string">"Content-type: application/x-www-form-urlencoded\r\n"</span> .</span><br><span class="line">            <span class="string">"Content-length: $content_length\r\n"</span>,</span><br><span class="line">        <span class="string">'content'</span> =&gt; $content</span><br><span class="line">    )</span><br><span class="line">);</span><br><span class="line">$context = stream_context_create($options);  <span class="comment">// 使用stream_context_create创建资源流上下文 </span></span><br><span class="line">$res = file_get_contents($url, <span class="keyword">false</span>, $context);   <span class="comment">// 发出请求</span></span><br><span class="line"><span class="keyword">echo</span> $res;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<p>也可以通过这种方式来发出GET请求</p>
+<h1 id="fopen"><a href="#fopen" class="headerlink" title="fopen"></a>fopen</h1><p><code>fopen()</code>函数打开文件或者URL。如果打开失败，本函数返回 FALSE。打开成功的话，会返回一个资源。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fopen(filename, mode, include_path, context)</span><br></pre></td></tr></table></figure>
+<table>
+    <tbody>
+        <tr>
+            <th align="left" valign="top" width="15%">参数</th>
+            <th align="left" valign="top" width="85%">描述</th>
+        </tr>
+        <tr>
+            <td valign="top">filename</td>
+            <td valign="top">必需。规定要打开的文件或 URL。</td>
+        </tr>
+        <tr>
+            <td valign="top">mode</td>
+            <td valign="top">必需。规定您请求到该文件/流的访问类型。<p>可能的值：</p>
+                <ul>
+                    <li>"r" （只读方式打开，将文件指针指向文件头）</li>
+                    <li>"r+" （读写方式打开，将文件指针指向文件头）</li>
+                    <li>"w" （写入方式打开，清除文件内容，如果文件不存在则尝试创建之）</li>
+                    <li>"w+" （读写方式打开，清除文件内容，如果文件不存在则尝试创建之）</li>
+                    <li>"a" （写入方式打开，将文件指针指向文件末尾进行写入，如果文件不存在则尝试创建之）</li>
+                    <li>"a+" （读写方式打开，通过将文件指针指向文件末尾进行写入来保存文件内容）</li>
+                    <li>"x" （创建一个新的文件并以写入方式打开，如果文件已存在则返回 FALSE 和一个错误）</li>
+                    <li>"x+" （创建一个新的文件并以读写方式打开，如果文件已存在则返回 FALSE 和一个错误）</li>
+                </ul>
+            </td>
+        </tr>
+        <tr>
+            <td valign="top">include_path</td>
+            <td valign="top">可选。如果您还想在 include_path（在 php.ini 中）中搜索文件的话，请设置该参数为 '1'。</td>
+        </tr>
+        <tr>
+            <td valign="top">context</td>
+            <td valign="top">可选。规定文件句柄的环境。context 是一套可以修改流的行为的选项。</td>
+        </tr>
+    </tbody>
+</table>
+
+
+<p>和<code>file_get_contents</code>类似，GET请求直接构造url即可，POST请求需要使用<code>stream_context_set_option()</code>创建资源请求上下文。<br>需要注意的是，<code>fopen()</code>是创建一个资源流，若是网络请求，其内容可以通过<code>stream_get_contents</code>获取，其元信息可以通过<code>stream_​get_​meta_​data</code>获取。</p>
+<p><strong>GET请求</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$data_get = <span class="keyword">array</span>(<span class="string">'a'</span>=&gt;<span class="number">1</span>,<span class="string">'b'</span>=&gt;<span class="number">2</span>);</span><br><span class="line">$url = <span class="string">"http://192.168.101.111/index.php?"</span> . http_build_query($data_get);</span><br><span class="line"></span><br><span class="line">$fp = fopen($url, <span class="string">'r'</span>);</span><br><span class="line">$res = stream_get_contents($fp);    <span class="comment">// 获取返回内容</span></span><br><span class="line"><span class="comment">// fpassthru($fp);  // 直接输出内容</span></span><br><span class="line">fclose($fp);</span><br><span class="line"><span class="keyword">echo</span> $res;</span><br></pre></td></tr></table></figure>
+<p><strong>POST请求</strong><br>和<code>file_put_contents</code>类似</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$data_post = <span class="keyword">array</span>(<span class="string">'a'</span>=&gt;<span class="number">1</span>,<span class="string">'b'</span>=&gt;<span class="number">2</span>);</span><br><span class="line">$url = <span class="string">'http://192.168.101.111/index.php'</span>;</span><br><span class="line"></span><br><span class="line">$content = http_build_query($data_post);   <span class="comment">// 构造post请求数据</span></span><br><span class="line">$content_length = strlen($content);        <span class="comment">// post请求体长度</span></span><br><span class="line">$options = <span class="keyword">array</span>(               <span class="comment">//http请求头</span></span><br><span class="line">    <span class="string">'http'</span> =&gt; <span class="keyword">array</span>(</span><br><span class="line">        <span class="string">'method'</span> =&gt; <span class="string">'POST'</span>,</span><br><span class="line">        <span class="string">'header'</span> =&gt;</span><br><span class="line">            <span class="string">"Content-type: application/x-www-form-urlencoded\r\n"</span> .</span><br><span class="line">            <span class="string">"Content-length: $content_length\r\n"</span>,</span><br><span class="line">        <span class="string">'content'</span> =&gt; $content</span><br><span class="line">    )</span><br><span class="line">);</span><br><span class="line">$context = stream_context_create($options);  <span class="comment">// 使用stream_context_create创建资源流上下文</span></span><br><span class="line">$fp = fopen($url, <span class="string">'r'</span>, <span class="keyword">false</span>, $context);   <span class="comment">// 发出请求</span></span><br><span class="line">$res = stream_get_contents($fp);        <span class="comment">// 获取返回内容</span></span><br><span class="line"><span class="comment">//fpassthru($fp);  // 直接输出内容</span></span><br><span class="line">fclose($fp);    <span class="comment">// 关闭资源</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">echo</span> $res;</span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+<h1 id="readfile"><a href="#readfile" class="headerlink" title="readfile"></a>readfile</h1><p>读取一个文件，并写入到输出缓冲。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">readfile(filename, include_path, context)</span><br></pre></td></tr></table></figure>
+
+<p>这个函数与<code>file_get_contents</code>类似，只是它是将返回内容直接输出，其返回值是读取到的字符长度。</p>
+<h1 id="file"><a href="#file" class="headerlink" title="file"></a>file</h1><p>把整个文件读入一个数组中。<br>数组中的每个元素都是文件中相应的一行，包括换行符在内。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">file(path,include_path,context)</span><br></pre></td></tr></table></figure>
+<p>与<code>readfile</code>大致相同</p>
+<h1 id="fsockopen"><a href="#fsockopen" class="headerlink" title="fsockopen"></a>fsockopen</h1><p>打开一个网络连接或一个unix套接字连接，返回一个文件句柄。常用于socket编程</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">fsockopen($hostname[, $port=<span class="number">-1</span>, &amp;$errno, &amp;$errstr, $timeout])</span><br></pre></td></tr></table></figure>
+<ul>
+<li><strong>hostname</strong> 主机名<br>如果安装了OpenSSL，那么你也许应该在你的主机名地址前面添加访问协议ssl://或者是tls://，从而可以使用基于TCP/IP协议的SSL或者TLS的客户端连接到远程主机。 </li>
+<li><strong>port</strong> 端口号。<br>如果对该参数传一个-1，则表示不使用端口，例如unix://。 </li>
+<li><strong>errno</strong><br>如果errno的返回值为0，而且这个函数的返回值为 FALSE ，那么这表明该错误发生在套接字连接（connect()）调用之前，导致连接失败的原因最大的可能是初始化套接字的时候发生了错误。 </li>
+<li><strong>errstr</strong> 错误信息将以字符串的信息返回。 </li>
+<li><strong>timeout</strong> 超时时间<br>单位为秒。</li>
+</ul>
+<p><strong>HTTP请求</strong></p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line">$url = <span class="string">"http://192.168.101.111/index.php"</span>;</span><br><span class="line">$data = <span class="keyword">array</span>(</span><br><span class="line">    <span class="string">'a'</span>=&gt;<span class="string">'1'</span>,</span><br><span class="line">    <span class="string">'b'</span>=&gt;<span class="string">'2'</span>,</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line">sock_get($url, $data);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sock_get</span><span class="params">($url, $data)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    $query_str = http_build_query($data);</span><br><span class="line">    $info = parse_url($url);</span><br><span class="line">    $fp = fsockopen($info[<span class="string">"host"</span>], <span class="number">80</span>, $errno, $errstr, <span class="number">3</span>);</span><br><span class="line">    <span class="keyword">if</span> (!$fp)</span><br><span class="line">        <span class="keyword">die</span>(<span class="string">"$errstr ($errno)&lt;br /&gt;\n"</span>);</span><br><span class="line">    $head = <span class="string">"GET "</span>.$info[<span class="string">'path'</span>].<span class="string">"?"</span>.$query_str.<span class="string">" HTTP/1.1\r\n"</span>;</span><br><span class="line">    $head .= <span class="string">"Host: "</span>.$info[<span class="string">'host'</span>].<span class="string">"\r\n"</span>;</span><br><span class="line">    $head .= <span class="string">"\r\n"</span>;</span><br><span class="line">    $write = fputs($fp, $head);</span><br><span class="line">    <span class="keyword">while</span> (!feof($fp))</span><br><span class="line">    &#123;</span><br><span class="line">        $line = fread($fp,<span class="number">4096</span>);</span><br><span class="line">        <span class="keyword">echo</span> $line;</span><br><span class="line">    &#125;</span><br><span class="line">    fclose($fp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>可以看到，通信数据全部都是由我们自己书写，所以POST请求也由我们自己构造</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line">$url = <span class="string">"http://192.168.101.111/index.php"</span>;</span><br><span class="line">$data = <span class="keyword">array</span>(</span><br><span class="line">    <span class="string">'a'</span>=&gt;<span class="string">'1'</span>,</span><br><span class="line">    <span class="string">'b'</span>=&gt;<span class="string">'2'</span>,</span><br><span class="line">);</span><br><span class="line">sock_post($url,$data);</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sock_post</span><span class="params">($url, $data)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    $query_str = http_build_query($data);</span><br><span class="line">    $info = parse_url($url);</span><br><span class="line">    $fp = fsockopen($info[<span class="string">"host"</span>], <span class="number">80</span>, $errno, $errstr, <span class="number">3</span>);</span><br><span class="line">    <span class="keyword">if</span> (!$fp)</span><br><span class="line">        <span class="keyword">die</span>(<span class="string">"$errstr ($errno)&lt;br /&gt;\n"</span>);</span><br><span class="line">    $head = <span class="string">"POST "</span>.$info[<span class="string">'path'</span>].<span class="string">"?"</span>.$info[<span class="string">"query"</span>].<span class="string">" HTTP/1.1\r\n"</span>;</span><br><span class="line">    $head .= <span class="string">"Host: "</span>.$info[<span class="string">'host'</span>].<span class="string">"\r\n"</span>;</span><br><span class="line">    $head .= <span class="string">"Referer: http://"</span>.$info[<span class="string">'host'</span>].$info[<span class="string">'path'</span>].<span class="string">"\r\n"</span>;</span><br><span class="line">    $head .= <span class="string">"Content-type: application/x-www-form-urlencoded\r\n"</span>;</span><br><span class="line">    $head .= <span class="string">"Content-Length: "</span>.strlen(trim($query_str)).<span class="string">"\r\n"</span>;</span><br><span class="line">    $head .= <span class="string">"\r\n"</span>;</span><br><span class="line">    $head .= trim($query_str);</span><br><span class="line">    $write = fputs($fp, $head);</span><br><span class="line">    <span class="keyword">while</span> (!feof($fp))</span><br><span class="line">    &#123;</span><br><span class="line">        $line = fread($fp,<span class="number">4096</span>);</span><br><span class="line">        <span class="keyword">echo</span> $line;</span><br><span class="line">    &#125;</span><br><span class="line">    fclose($fp);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="PHP-上下文-context-选项和参数"><a href="#PHP-上下文-context-选项和参数" class="headerlink" title="PHP 上下文(context)选项和参数"></a>PHP 上下文(context)选项和参数</h1><p>PHP中提供了多种上下文选项和参数，可用于所有的文件系统或数据流封装协议。</p>
+<p>上下文(context)由<code>stream_context_create()</code>创建，选项可通过<code>stream_context_set_option()</code>设置，参数可通过<code>stream_context_set_params()</code>设置。</p>
+<p>这里主要看HTTP Context 选项</p>
+<p>可选项：</p>
+<ul>
+<li><strong>method</strong> <code>string</code><br>远程服务器支持的 GET，POST 或其它 HTTP 方法。<br>默认值是 GET。</li>
+<li><strong>header</strong> <code>string</code><br>请求期间发送的额外 header。在此选项的值将覆盖其他值（诸如 <code>User-agent</code>:，Host: 和 <code>Authentication</code>:）。</li>
+<li><strong>user_agent</strong> <code>string</code><br>要发送的 header <code>User-Agent:</code> 的值。如果在上面的 header context 选项中没有指定 <code>user-agent</code>，此值将被使用。<br>默认使用 php.ini 中设置的 <code>user_agent</code>。</li>
+<li><strong>content</strong> <code>string</code><br>在 header 后面要发送的额外数据。通常使用POST或PUT请求。</li>
+<li><strong>proxy</strong> <code>string</code><br>URI 指定的代理服务器的地址。(e.g. tcp://proxy.example.com:5100).</li>
+<li><strong>request_fulluri</strong> <code>bool</code><br>当设置为 TRUE 时，在构建请求时将使用整个 URI<br>(i.e. <code>GET http://www.example.com/path/to/file.html HTTP/1.0</code>)。<br>虽然这是一个非标准的请求格式，但某些代理服务器需要它。<br>默认值是 FALSE.</li>
+<li><strong>follow_location</strong> <code>int</code><br>跟随 Location header 的重定向。设置为 0 以禁用。<br>默认值是 1。</li>
+<li><strong>max_redirects</strong> <code>int</code><br>跟随重定向的最大次数。值为 1 或更少则意味不跟随重定向。<br>默认值是 20。</li>
+<li><strong>protocol_version</strong> <code>float</code><br>HTTP 协议版本。<br>默认值是 1.0。</li>
+<li><strong>timeout</strong> <code>float</code><br>读取超时时间，单位为秒，用 float 指定(e.g. 10.5)。<br>默认使用 php.ini 中设置的 <code>default_socket_timeout</code></li>
+<li><strong>ignore_errors</strong> <code>bool</code><br>即使是故障状态码依然获取内容。<br>默认值为 FALSE.</li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Dar1in9</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://dar1in9s.github.io/2020/04/26/php%E4%B8%AD%E5%B8%B8%E8%A7%81%E5%8F%AF%E8%83%BD%E4%BA%A7%E7%94%9Fssrf%E6%BC%8F%E6%B4%9E%E7%9A%84%E5%87%BD%E6%95%B0/">http://dar1in9s.github.io/2020/04/26/php%E4%B8%AD%E5%B8%B8%E8%A7%81%E5%8F%AF%E8%83%BD%E4%BA%A7%E7%94%9Fssrf%E6%BC%8F%E6%B4%9E%E7%9A%84%E5%87%BD%E6%95%B0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://Dar1in9s.github.io">Dar1in9's Blog</a>！</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/php/">php</a><a class="post-meta__tags" href="/tags/SSRF/">SSRF</a></div><nav id="pagination"><div class="prev-post pull-left"><a href="/2020/04/27/%E6%AD%A3%E5%88%99%E8%A1%A8%E8%BE%BE%E5%BC%8F%E8%AF%AD%E6%B3%95%E5%92%8CPHP%E4%B8%AD%E7%9A%84%E7%9B%B8%E5%85%B3%E5%87%BD%E6%95%B0/"><i class="fa fa-chevron-left">  </i><span>PHP中的正则表达式语法和相关函数</span></a></div><div class="next-post pull-right"><a href="/2020/04/26/php%E4%B8%AD%E7%9A%84%E5%AD%97%E7%AC%A6%E4%B8%B2%E6%A0%BC%E5%BC%8F%E5%8C%96%E6%BC%8F%E6%B4%9E/"><span>php中的字符串格式化漏洞</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer class="footer-bg" style="background-image: url(https://blog-1300147235.cos.ap-chengdu.myqcloud.com/18085.jpg)"><div class="layout" id="footer"><div class="copyright">&copy;2020 By Dar1in9</div><div class="framework-info"><span>驱动 - </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>主题 - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody" target="_blank" rel="noopener"><span>Melody</span></a></div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.7.0"></script><script src="/js/fancybox.js?version=1.7.0"></script><script src="/js/sidebar.js?version=1.7.0"></script><script src="/js/copy.js?version=1.7.0"></script><script src="/js/fireworks.js?version=1.7.0"></script><script src="/js/transition.js?version=1.7.0"></script><script src="/js/scroll.js?version=1.7.0"></script><script src="/js/head.js?version=1.7.0"></script><script src="/js/search/algolia.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css"><script src="/js/katex.js"></script><script src="/js/search/local-search.js"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script><div class="search-dialog" id="algolia-search"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fa fa-times"></i></span></div><div class="search-mask"></div></body></html>

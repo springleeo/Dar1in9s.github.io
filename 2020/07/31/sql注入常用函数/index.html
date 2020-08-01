@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="sql注入中常用的函数"><meta name="keywords" content="Sql注入"><meta name="author" content="Dar1in9"><meta name="copyright" content="Dar1in9"><title>sql注入中常用的函数 | Dar1in9's Blog</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.7.0"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.1.1/dist/instantsearch.min.css"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.1.1/dist/instantsearch.min.js" defer></script><link rel="dns-prefetch" href="http://ta.qq.com"><script>(function() {
+   var hm = document.createElement("script");
+   hm.src = "https://tajs.qq.com/stats?sId=&lt;script type=&quot;text/javascript&quot; src=&quot;http://tajs.qq.com/stats?sId=66549793&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;";
+   var s = document.getElementsByTagName("script")[0];
+   s.parentNode.insertBefore(hm, s);
+ })();</script><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"MY1GAADR9W","apiKey":"5032629da4e94f659d98a4052bc1c5cd","indexName":"blog","hits":{"per_page":10},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容:${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容:${query}"}},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  }
+} </script><meta name="generator" content="Hexo 4.2.0"></head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="切换文章详情">切换站点概览</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">目录</div><div class="sidebar-toc__progress"><span class="progress-notice">你已经读了</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#字符串相关函数"><span class="toc-number">1.</span> <span class="toc-text">字符串相关函数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#数学相关函数"><span class="toc-number">2.</span> <span class="toc-text">数学相关函数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#系统信息函数"><span class="toc-number">3.</span> <span class="toc-text">系统信息函数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#流程控制函数"><span class="toc-number">4.</span> <span class="toc-text">流程控制函数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#其他函数"><span class="toc-number">5.</span> <span class="toc-text">其他函数</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#一些系统变量"><span class="toc-number">6.</span> <span class="toc-text">一些系统变量</span></a></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/01.png"></div><div class="author-info__name text-center">Dar1in9</div><div class="author-info__description text-center">人间值得，未来可期</div><div class="follow-button"><a href="https://github.com/Dar1in9s" target="_blank" rel="noopener">Follow Me</a></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">文章</span><span class="pull-right">53</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">标签</span><span class="pull-right">21</span></a></div></div></div><div id="content-outer"><div id="top-container" style="background-image: url(https://blog-1300147235.cos.ap-chengdu.myqcloud.com/18085.jpg)"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">Dar1in9's Blog</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">Home</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/about">About</a></span><span class="pull-right"><a class="site-page social-icon search"><i class="fa fa-search"></i><span> 搜索</span></a></span></div><div id="post-info"><div id="post-title">sql注入中常用的函数</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-07-31</time><div class="post-meta-wordcount"><span>字数总计: </span><span class="word-count">1.2k</span><span class="post-meta__separator">|</span><span>阅读时长: 4 分钟</span></div></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><p>SQL注入中常用的函数</p>
+<a id="more"></a>
+
+<h1 id="字符串相关函数"><a href="#字符串相关函数" class="headerlink" title="字符串相关函数"></a>字符串相关函数</h1><ul>
+<li><code>length(str)</code><br>获取字符串 str 的长度<br></li>
+<li><code>substr(str, index, length)</code><br>截取 str ，从 index 开始，截取长度为 length <br></li>
+<li><code>substring(str, index, length)</code><br>截取 str ，从 index 开始，截取长度为 length<br></li>
+<li><code>mid(str, index, length)</code><br>截取 str ，从 index 开始，截取长度为 length <br></li>
+<li><code>insert(str, pos, length, newstr)</code><br>在原始字符串 str 中，将自左第 pos 位开始，长度为 length 的字符串替换成新的字符串 newstr<br><code>substr(str, 1, length) &lt;==&gt; insert(str, length+1, 100, &#39;&#39;)</code><br>其中的 100 可换为为大于等于 str 字符串长度的数字<br></li>
+<li><code>left(str, length)</code><br>截取 str ，从左边第一位开始，截取长度为 length<br>等价于：<code>substr(str, 1, length)</code><br></li>
+<li><code>right(str, length)</code><br>截取 str ，从右边第一位开始，截取长度为 length<br>等价于：<code>substr(str, -1, length)</code><br></li>
+<li><code>lpad(str, length, padstr)</code>、<code>rpad(str, length, padstr)</code><br>在 str 的左(右)方填充 padstr ，直到字符串长度为 length；<br><strong>如果 str 长度大于 length ，则将返回的字符串的长度缩减到 length 的长度</strong><br><code>lpad(str, length, 0) &lt;==&gt; substr(str, 1, length)</code><br></li>
+<li><code>trim(A from B)</code><br>将字符串 B 中的 A 部分删去，返回剩余部分<br>例如：<code>select trim(&#39;12&#39; from &#39;1234&#39;); ==&gt; &#39;34&#39;</code><br><strong>Trick</strong>: <code>from</code>前后的空格可以不要，即<code>select trim(&#39;12&#39;from&#39;1234&#39;);</code><br></li>
+<li><code>lower(str)/lcase(str)</code>、<code>upper(str)/ucase(str)</code><br>将 str 转换成小/大写<br></li>
+<li><code>reverse(str)</code><br>将 str 倒序返回<br></li>
+<li><code>ascii(str)</code>、<code>ord(str)</code><br>将单个字符转换成ascii码<br>注意：这两个函数都只能转换单个字符，如果传入字符串，则对字符串的第一个字符进行转换<br></li>
+<li><code>char(num)</code><br>将ascii码转换成字符<br><strong>Trick</strong>: char 函数可以使用逗号，将多个ascii码同时转换成为字符串<br><code>select char(97,98,99); ==&gt; &#39;abc&#39;</code><br></li>
+<li><code>hex(str)</code>、<code>unhex(str)</code><br>字符串16进制的相互转换<br></li>
+<li><code>bin(num)</code>、<code>oct(num)</code><br>数字转2进制、8进制<br></li>
+<li><code>conv(N,A,B)</code><br>将数字 N 从 A 进制转换成 B 进制<br><strong>Trick</strong>: 可以使用 <code>conv(i,10,36)</code> 配合大小写转换函数生成任意字母<br><code>select conv(10,10,36);  ==&gt; &#39;A&#39;</code><br><code>select lower(conv(10,10,36));  ==&gt; &#39;a&#39;</code><br></li>
+<li><code>binary value</code>/<code>binary(value)</code><br>将 value 转换成二进制字符串<br><strong>应用：</strong> 区分大小写<br><code>select (&#39;A&#39;=&#39;a&#39;) ==&gt; 1</code><br><code>select (binary &#39;A&#39;=&#39;a&#39;) ==&gt; 0</code><br><strong>Trick：</strong> binary和’A’之间可以不要空格：<code>select(binary&#39;A&#39;=&#39;a&#39;)</code><br></li>
+<li><code>concat(str1, str2)</code><br>将 str1 和 str2 拼接<br></li>
+<li><code>group_concat(comumn1, column2)</code><br>将 column1 和 column2 两列数据进行拼接，不同行之间用逗号连接。<br><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20200731185055.png" alt=""><br></li>
+<li><code>strcmp(str1, str2)</code><br>将 str1 和 str2 进行比较<br>如果 str1 = str2，返回 0<br>如果 str1 &lt; str2，返回 -1<br>如果 str1 &gt; str2，返回 1<br></li>
+<li><code>find_in_set(str, list)</code><br>分析逗号分隔的 list 列表，如果发现 str ，返回 str 在 list 中的位置<br><strong>应用：</strong><code>find_in_set(str1, str2)</code> 判断 str1 和 str2 是否相等，如果相等，返回 1 ，否则返回 0  （str2中不能有逗号）<br></li>
+<li><code>field(value, val1, val2, val3, ...)</code><br>返回 value 在 val 中的位置<br><strong>应用：</strong><code>field(str1, str2)</code> 判断 str1 和 str2 是否相等，如果相等，返回 1 ，否则返回 0<br></li>
+<li><code>position(substr IN str)</code><br>返回子串 substr 在字符串 str 首次出现的位置，如果没有找到则返回 0<br></li>
+<li><code>locate(substr, str)</code><br>返回子串 substr 在字符串 str 首次出现的位置，如果没有找到则返回 0<br>此函数和 position 等价</li>
+</ul>
+<h1 id="数学相关函数"><a href="#数学相关函数" class="headerlink" title="数学相关函数"></a>数学相关函数</h1><ul>
+<li><code>exp(num)</code><br>返回 e 的 num 次方<br></li>
+<li><code>x div y</code><br>返回 x 除以 y 的整数部分<br></li>
+<li><code>pow(x, y)/power(x, y)</code><br>返回 x 的 y 次方<br></li>
+<li><code>rand()</code><br>返回 0~1 之间的随机小数<br></li>
+<li><code>floor(num)</code><br>返回 num 的向下取整<br></li>
+<li><code>ceil(num)</code><br>返回 num 的向上取整<br></li>
+<li><code>greatest(a, b, c)</code><br>返回 a,b,c 中较大的那个<br><code>greageest(A, B)=B  &lt;==&gt;  B≥A</code><br></li>
+<li><code>least(a, b, c)</code><br>返回 a,b,c 中较小的那个<br><code>least(A, B)=B  &lt;==&gt;  B≤A</code></li>
+</ul>
+<h1 id="系统信息函数"><a href="#系统信息函数" class="headerlink" title="系统信息函数"></a>系统信息函数</h1><ul>
+<li><code>database()/schema()</code><br>获取当前数据库名<br></li>
+<li><code>user()</code><br>获取用户名<br></li>
+<li><code>version()</code><br>获取数据库版本<br></li>
+<li><code>load_file(path)</code><br>读取文件<br></li>
+<li><code>into outfile &#39;path&#39;</code><br>写入文件</li>
+</ul>
+<h1 id="流程控制函数"><a href="#流程控制函数" class="headerlink" title="流程控制函数"></a>流程控制函数</h1><ul>
+<li><code>CASE WHEN [test] THEN [result] ELSE [default] END</code><br>如果 test 为真，则返回 result 否则返回 default<br></li>
+<li><code>CASE [test] WHEN [val] THEN [result] ELSE [default] END</code><br>如果 test 和 val 相等，则返回 result ，否则返回 default<br></li>
+<li><code>if(test, a, b)</code><br>如果 test 是真，返回 a ，否则返回 b<br></li>
+<li><code>ifnull(arg1, arg2)</code><br>如果 arg1 不是空，返回 arg1 ，否则返回 arg2<br></li>
+<li><code>nullif(arg1, arg2)</code><br>如果 arg1 和 arg2 相等，返回 null，否则返回 arg1</li>
+</ul>
+<h1 id="其他函数"><a href="#其他函数" class="headerlink" title="其他函数"></a>其他函数</h1><ul>
+<li><code>sleep(num)</code><br>停止等待 num 秒钟<br></li>
+<li><code>benchmark(count, expr)</code><br>执行 expr 表达式 count 次</li>
+</ul>
+<h1 id="一些系统变量"><a href="#一些系统变量" class="headerlink" title="一些系统变量"></a>一些系统变量</h1><ul>
+<li><code>@@datadir</code><br>数据库数据路径<br></li>
+<li><code>@@basedir</code><br>数据库安装路径变量<br></li>
+<li><code>@@version</code><br>数据库版本变量<br></li>
+<li><code>@@version_compile_os</code><br>操作系统变量version_compile_os<br>
+
+</li>
+</ul>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Dar1in9</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://dar1in9s.github.io/2020/07/31/sql%E6%B3%A8%E5%85%A5%E5%B8%B8%E7%94%A8%E5%87%BD%E6%95%B0/">http://dar1in9s.github.io/2020/07/31/sql%E6%B3%A8%E5%85%A5%E5%B8%B8%E7%94%A8%E5%87%BD%E6%95%B0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://Dar1in9s.github.io">Dar1in9's Blog</a>！</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Sql%E6%B3%A8%E5%85%A5/">Sql注入</a></div><nav id="pagination"><div class="next-post pull-right"><a href="/2020/06/12/django/"><span>Django基础语法</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer class="footer-bg" style="background-image: url(https://blog-1300147235.cos.ap-chengdu.myqcloud.com/18085.jpg)"><div class="layout" id="footer"><div class="copyright">&copy;2020 By Dar1in9</div><div class="framework-info"><span>驱动 - </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>主题 - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody" target="_blank" rel="noopener"><span>Melody</span></a></div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.7.0"></script><script src="/js/fancybox.js?version=1.7.0"></script><script src="/js/sidebar.js?version=1.7.0"></script><script src="/js/copy.js?version=1.7.0"></script><script src="/js/fireworks.js?version=1.7.0"></script><script src="/js/transition.js?version=1.7.0"></script><script src="/js/scroll.js?version=1.7.0"></script><script src="/js/head.js?version=1.7.0"></script><script src="/js/search/algolia.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css"><script src="/js/katex.js"></script><script src="/js/search/local-search.js"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script><div class="search-dialog" id="algolia-search"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fa fa-times"></i></span></div><div class="search-mask"></div></body></html>
